@@ -159,9 +159,13 @@ class myTool( Tool ):
             # else:
             #     logger.progress("The execution finished successfully", status="FINISHED")
 
+            from multiprocessing import Process, Queue
 
-            ## Get Token
-        
+
+            #import requests
+            #r = requests.get('https://api.github.com/user', auth=('user', 'pass'))
+            #r.status_code
+
             #curl 
             #-d "client_id=fl_manager_api" 
             #-d "client_secret=AeBUrWqWO2DrIfYsPBIIOvyc1vrnnFv3" 
@@ -169,32 +173,20 @@ class myTool( Tool ):
             #-d "password=test" 
             #-d "grant_type=password" https://inb.bsc.es/auth/realms/datatools4heart/protocol/openid-connect/token
 
-            token = self.configuration.get('token')
-            if not token:
-                try:
-                    demo_user='test@bsc.es',
-                    demo_pass='test',
-                    token= pipeline.get_fedmanager_token(demo_user,demo_pass)
-                    print(f"Obtained token for demo user: {demo_user}")
 
-                except  Exception as e:
-                    raise Exception(f"Failed to get token from Authentication Server for user { demo_user }  : {e}")
+            token = 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJoc1d1b1g3YTI2VENuZFh2MzBDTjFocDB2eEdxcmMyUnB6SlFxRFpQTGx3In0.eyJleHAiOjE3MTYzOTIxNDcsImlhdCI6MTcxNjM4ODU0NywianRpIjoiM2M4ZDZhZjctZmUyMS00ZWZjLWEzN2MtMTNjODIxZGVmOGFlIiwiaXNzIjoiaHR0cHM6Ly9pbmIuYnNjLmVzL2F1dGgvcmVhbG1zL2RhdGF0b29sczRoZWFydCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJiNmZmYWMzNi02ZjkxLTRlMmMtYTk0NS04NWQ4MWYxY2VkMWYiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJmbF9tYW5hZ2VyX2FwaSIsInNlc3Npb25fc3RhdGUiOiJiMjNlMjg1YS02MDI1LTQ0M2ItYTQyYy0zOTY4MzhlZDg4MTYiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiZGVmYXVsdC1yb2xlcy1kYXRhdG9vbHM0aGVhcnQiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwic2lkIjoiYjIzZTI4NWEtNjAyNS00NDNiLWE0MmMtMzk2ODM4ZWQ4ODE2IiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJuYW1lIjoidGVzdCB0ZXN0IiwicHJlZmVycmVkX3VzZXJuYW1lIjoidGVzdEB0ZXN0LmJzYyIsImdpdmVuX25hbWUiOiJ0ZXN0IiwiZmFtaWx5X25hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QHRlc3QuYnNjIn0.LO5zhpPK2WJ5Z0agzfB01nfDhMG390gOVskiBaLqfPoiNtouHVY-Rw5Iz2OJ-pjbH1msCTli2mFMBgY-_NLq__mw9dD6flW-mMCcv_7pGvFjlKgsxnuY0YrR2eSIJJ736mBTOkQLv0AO_bnrHtZXnJe4_Mt-2MDmgsRtGKVS-a51CDpQIZDLGg3116_waTcLGGQkuJqeTtNpFtH5w7WgTvtDDmfUxmNscMcdGJYEl5EM2KfxVHmBh7wZi4Zoj2DSqK814MpKLPf-ePapq3u_R8rctPnRy3f6btShuZCsDN-FqNcn7_mVEDYNhQtcEPaeHMGfZNA3fHrljotteEVtcA","expires_in":3600,"refresh_expires_in":1800,"refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI0ZjViOTk2Ni01MTY0LTRhODktYjIzZS1kMzE5MWZlZGI4MDAifQ.eyJleHAiOjE3MTYzOTAzNDcsImlhdCI6MTcxNjM4ODU0NywianRpIjoiZWU0Yzc2NGEtMGU1YS00MjAyLTgzNTQtNWViYTVjMmY1MmJkIiwiaXNzIjoiaHR0cHM6Ly9pbmIuYnNjLmVzL2F1dGgvcmVhbG1zL2RhdGF0b29sczRoZWFydCIsImF1ZCI6Imh0dHBzOi8vaW5iLmJzYy5lcy9hdXRoL3JlYWxtcy9kYXRhdG9vbHM0aGVhcnQiLCJzdWIiOiJiNmZmYWMzNi02ZjkxLTRlMmMtYTk0NS04NWQ4MWYxY2VkMWYiLCJ0eXAiOiJSZWZyZXNoIiwiYXpwIjoiZmxfbWFuYWdlcl9hcGkiLCJzZXNzaW9uX3N0YXRlIjoiYjIzZTI4NWEtNjAyNS00NDNiLWE0MmMtMzk2ODM4ZWQ4ODE2Iiwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwic2lkIjoiYjIzZTI4NWEtNjAyNS00NDNiLWE0MmMtMzk2ODM4ZWQ4ODE2In0.l3JPeZMd9fWlZ_QuKP_kpjEUmetQA2og7U7xs8f--L8'
+            # token = self.configuration[ '' ]
 
-            ## Get Nodes
-            node_list = self.configuration.get('node_list').split(",")
-            node_list = [ 'BSC', 'UCLH', 'UCLH']
+            node_list  = [ 'UB', 'BSC', 'HULAFE' ]
+            tool_name  = 'quibim_segmentation'
 
-            ## Get Tool
-            tool_name  = 'flcore'
+            queue = Queue()
+            p = Process( target = pipeline.second_demonstrator, args=( token, node_list, tool_name ) )
+            p.start()
+            p.join()
+            result = queue.get()
 
-            ## Trigger pipeline
-
-            result = pipeline.second_demonstrator(token, node_list, tool_name)
-
-            if result is not None:
-                print(f"Remote process returned: {result}")
-            else:
-                print(f"Remote process returned nothing")
+            logger.progress( result[ 'message' ], status = 'FINISHED' if result[ 'status' ] == 'success' else 'WARNING' )
 
         except:
             errstr = "The execution failed. See logs."

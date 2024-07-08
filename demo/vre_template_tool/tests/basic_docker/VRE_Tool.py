@@ -159,6 +159,10 @@ class myTool( Tool ):
             # else:
             #     logger.progress("The execution finished successfully", status="FINISHED")
 
+            from multiprocessing import Process, Queue
+
+
+            
 
             ## Get Token
         
@@ -174,7 +178,7 @@ class myTool( Tool ):
                 try:
                     demo_user='test@bsc.es',
                     demo_pass='test',
-                    token= pipeline.get_fedmanager_token(demo_user,demo_pass)
+                    token= pipeline.getFedManagerToken(demo_user,demo_pass)
                     print(f"Obtained token for demo user: {demo_user}")
 
                 except  Exception as e:
@@ -188,13 +192,18 @@ class myTool( Tool ):
             tool_name  = 'flcore'
 
             ## Trigger pipeline
+            queue = Queue()
 
-            result = pipeline.second_demonstrator(token, node_list, tool_name)
+            p = Process( target = pipeline.second_demonstrator, args=( token, node_list, tool_name, queue ) )
+            p.start()
 
-            if result is not None:
-                print(f"Remote process returned: {result}")
-            else:
-                print(f"Remote process returned nothing")
+            try:
+                result = queue.get(timeout=10)
+                logger.progress( result[ 'message' ], status = 'FINISHED' if result[ 'status' ] == 'success' else 'WARNING' )
+            except multiprocessing.queue.Empty:
+                logger.error( "Failed to get result from the remote process")
+    
+            p.join()
 
         except:
             errstr = "The execution failed. See logs."

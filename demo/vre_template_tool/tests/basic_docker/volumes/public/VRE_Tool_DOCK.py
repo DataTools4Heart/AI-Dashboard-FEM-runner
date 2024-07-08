@@ -25,7 +25,10 @@ from glob import glob
 from basic_modules.tool import Tool
 from utils import logger
 
-class myTool(Tool):
+import tool.eucaim_demonstrator as pipeline
+
+
+class myTool( Tool ):
     """
     """
     DEFAULT_KEYS = ['execution', 'project', 'description']
@@ -91,7 +94,7 @@ class myTool(Tool):
             output_id = output_metadata[0]['name']
             output_file_path = output_metadata[0]['file']['file_path']
             output_type = output_metadata[0]['file']['file_type'].lower()
-            
+
             # Tool Execution
             self.run_my_demo_pipeline(input_files,output_file_path)
             #HERE GOES YOUR TOOL'S FUNCTION EXECUTION
@@ -134,27 +137,64 @@ class myTool(Tool):
             print(os.getcwd())
             print("\n-- Expected output is:")
             print(output_file_path)
-            cmd = [
-                'bash', '/home/my_demo_pipeline.sh', output_file_path 
-            ]
-            print("\n-- Starting the Demo pipeline")
-            print(cmd)
-            
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.STDOUT) # stderr=subprocess.PIPE
+            # cmd = [
+            #     'bash', '/home/my_demo_pipeline.sh', output_file_path
+            # ]
+            # print("\n-- Starting the Demo pipeline")
+            # print(cmd)
 
-            # Sending the stdout to the log file
-            for line in iter(process.stdout.readline, b''):
-                print(line.rstrip().decode("utf-8").replace("^[", " "))
+            # process = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.STDOUT) # stderr=subprocess.PIPE
 
-            rc = process.poll()
-            while rc is None:
-                rc = process.poll()
-                time.sleep(0.1)
+            # # Sending the stdout to the log file
+            # for line in iter(process.stdout.readline, b''):
+            #     print(line.rstrip().decode("utf-8").replace("^[", " "))
 
-            if rc is not None and rc != 0:
-                logger.progress("Something went wrong inside the execution. See logs", status="WARNING")
+            # rc = process.poll()
+            # while rc is None:
+            #     rc = process.poll()
+            #     time.sleep(0.1)
+
+            # if rc is not None and rc != 0:
+            #     logger.progress("Something went wrong inside the execution. See logs", status="WARNING")
+            # else:
+            #     logger.progress("The execution finished successfully", status="FINISHED")
+
+
+            ## Get Token
+        
+            #curl 
+            #-d "client_id=fl_manager_api" 
+            #-d "client_secret=AeBUrWqWO2DrIfYsPBIIOvyc1vrnnFv3" 
+            #-d "username=test@test.bsc" 
+            #-d "password=test" 
+            #-d "grant_type=password" https://inb.bsc.es/auth/realms/datatools4heart/protocol/openid-connect/token
+
+            token = self.configuration.get('token')
+            if not token:
+                try:
+                    demo_user='test@bsc.es',
+                    demo_pass='test',
+                    token= pipeline.get_fedmanager_token(demo_user,demo_pass)
+                    print(f"Obtained token for demo user: {demo_user}")
+
+                except  Exception as e:
+                    raise Exception(f"Failed to get token from Authentication Server for user { demo_user }  : {e}")
+
+            ## Get Nodes
+            node_list = self.configuration.get('node_list').split(",")
+            node_list = [ 'BSC', 'UCLH', 'UCLH']
+
+            ## Get Tool
+            tool_name  = 'flcore'
+
+            ## Trigger pipeline
+
+            result = pipeline.second_demonstrator(token, node_list, tool_name)
+
+            if result is not None:
+                print(f"Remote process returned: {result}")
             else:
-                logger.progress("The execution finished successfully", status="FINISHED")
+                print(f"Remote process returned nothing")
 
         except:
             errstr = "The execution failed. See logs."

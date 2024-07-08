@@ -10,12 +10,12 @@
 
 CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEST_DATA_DIR=$CWD
-TOOL_IMAGE=demo_tool
+TOOL_IMAGE=fedmanager_executor:v0.1
 
 ###### DO NOT EDIT ##############
 
-WORKING_DIR_HOST=$TEST_DATA_DIR/volumes/userdata/user_1/run000
-WORKING_DIR_DOCKER=/shared_data/userdata/user_1/run000
+WORKING_DIR_HOST=$TEST_DATA_DIR/volumes/userdata/user_1/run001
+WORKING_DIR_DOCKER=/shared_data/userdata/user_1/run001
 TOOL_EXECUTABLE=/home/vre_template_tool/VRE_RUNNER
 
 
@@ -39,16 +39,21 @@ echo "--- Start time: $(date)"
 echo '# Start time:' $(date) > $WORKING_DIR_HOST/tool.log
 
 cmd="docker run \
-	-d --privileged --network=host \
+	-dit \
+	--privileged --network=host \
 	-e HOST_GID=$(id -g) \
 	-e HOST_UID=$(id -u) \
 	-v $TEST_DATA_DIR/volumes/public:/shared_data/public_tmp \
 	-v $TEST_DATA_DIR/volumes/userdata:/shared_data/userdata_tmp \
 	$TOOL_IMAGE \
-	$TOOL_EXECUTABLE --config $WORKING_DIR_DOCKER/config.json --in_metadata $WORKING_DIR_DOCKER/in_metadata.json --out_metadata $WORKING_DIR_DOCKER/out_metadata.json --log_file $WORKING_DIR_DOCKER/tool.log
+	/bin/bash
 "
+cmd_app="$TOOL_EXECUTABLE --config $WORKING_DIR_DOCKER/config.json --in_metadata $WORKING_DIR_DOCKER/in_metadata.json --out_metadata $WORKING_DIR_DOCKER/out_metadata.json --log_file $WORKING_DIR_DOCKER/tool.log"
 
-echo $cmd
-$cmd >>  $WORKING_DIR_HOST/tool.log 2>&1
+echo "--- Docker Run: $cmd"
+echo "--- Docker VRE App: $cmd_app"
+
+$cmd
+#$cmd >>  $WORKING_DIR_HOST/tool.log 2>&1
 echo "--- End time: $(date)"
 echo "--- Check $WORKING_DIR_HOST"

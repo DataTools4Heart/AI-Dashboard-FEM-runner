@@ -17,11 +17,12 @@ WORKDIR /home/vre_template_tool
 
 RUN pip3 install --upgrade wheel
 RUN pip3 install -r requirements.txt
+COPY requirements_app.txt .
+RUN pip3 install -r requirements_app.txt
 RUN pip3 install --upgrade pip
 
 #Adding your test files
-COPY ./vre_template_tool/tests /home/vre_template_tool/tests
-COPY ./vre_template_tool/VRE_Tool.py /home/vre_template_tool/tool
+COPY ./vre_template_tool/* /home/vre_template_tool/tool/
 RUN chmod -R 777 /home/vre_template_tool
 RUN  chmod -R a+rwx /home/vre_template_tool
 

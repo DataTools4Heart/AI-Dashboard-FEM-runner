@@ -11,12 +11,12 @@
             "value": "example"
         },
         {
-            "name": "description",
-            "value": "test"
+            "name": "tool",
+            "value": "flcoore"
         },
         {
-            "name": "argument_name",
-            "value": "Random String"
+            "name": "node_list",
+            "value": "BSC"
         }
     ],
     "output_files": [
