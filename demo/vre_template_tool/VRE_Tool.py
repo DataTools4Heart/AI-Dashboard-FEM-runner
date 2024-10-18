@@ -22,11 +22,12 @@ import subprocess
 import time
 from glob import glob
 
-from basic_modules.tool import Tool
-from utils import logger
+# from basic_modules.tool import Tool
+# from utils import logger
 
-import tool.eucaim_demonstrator as pipeline
+# import tool.eucaim_demonstrator as pipeline
 
+from dt4h_demonstrator import dt4h_demonstrator
 
 class myTool( Tool ):
     """
@@ -137,6 +138,17 @@ class myTool( Tool ):
             print(os.getcwd())
             print("\n-- Expected output is:")
             print(output_file_path)
+
+            return dt4h_demonstrator(
+                self.configuration.get('token'),
+                self.configuration.get('server_node_list').split(","),
+                self.configuration.get('client_node_list').split(","),
+                input_files=None,
+                tool_idr='flcore', 
+                queue=None,
+                health_check=False
+            )
+
             # cmd = [
             #     'bash', '/home/my_demo_pipeline.sh', output_file_path
             # ]
