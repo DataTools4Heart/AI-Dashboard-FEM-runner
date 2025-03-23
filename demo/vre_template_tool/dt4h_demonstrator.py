@@ -159,6 +159,10 @@ def dt4h_demonstrator(
         )
         logging.info(f"server: {health_check_data}")
 
+        if not health_check_data[server_node]:
+            logging.error(f"No server heartbeat data found for node {server_node}")
+            return {'status': 'failure', 'message': 'No server heartbeat data found.'}
+
         if 'state' in health_check_data[server_node][0] and health_check_data[server_node][0]['state'] == 'running':
             server_active_node = server_node
     else:
@@ -174,6 +178,10 @@ def dt4h_demonstrator(
                 access_token,
                 node
             )
+            if not health_check_data[node]:
+                logging.error(f"No client heartbeat data found for node {node}")
+                return {'status': 'failure', 'message': 'No client heartbeat data found.'}
+
             logging.info(f"clients: {health_check_data}")
             if 'state' in health_check_data[node][0] and health_check_data[node][0]['state'] == 'running':
                 client_active_nodes.append(node)
