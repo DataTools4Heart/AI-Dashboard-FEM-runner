@@ -25,8 +25,6 @@ from glob import glob
 # from basic_modules.tool import Tool
 # from utils import logger
 
-# import tool.eucaim_demonstrator as pipeline
-
 from dt4h_demonstrator import dt4h_demonstrator
 
 class myTool( Tool ):
