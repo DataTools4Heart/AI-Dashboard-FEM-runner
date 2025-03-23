@@ -22,6 +22,7 @@ def _create_header(token: str) -> dict:
 
 
 def wait(n: float = 1.5) -> None:
+    logging.info(f"Waiting {n} seconds")
     time.sleep(n)
 
 
@@ -50,55 +51,59 @@ def get_FEM_token(user: str, pwd: str) -> str:
 # ----------------------------------------------------------------------------
 def node_heartbeat(api_prefix, access_token: str, node: str) -> dict:
     headers = _create_header(access_token)
+
     heartbeat_data = {}
     url = f"{api_prefix}/hosts/heartbeat?node_name={node}"
-    
+
     response_data = requests.get(url, headers=headers)
-    
+
     if response_data.status_code != 200:
         heartbeat_data[node] = (response_data.status_code, response_data)
     else:
         heartbeat_data[node] = response_data.json()
-    
+
     return heartbeat_data
 
 
 # EXECUTE TOOL IN NODES
 # ----------------------------------------------------------------------------
 def execute_tool(
-        api_prefix: str,
-        access_token: str,
-        server_node: str,
-        client_nodes: List[str],
-        tool_name: str,
-        params: dict = None
-    ) -> dict:
+            api_prefix: str,
+            access_token: str,
+            server_node: str,
+            client_nodes: List[str],
+            tool_name: str,
+            params: dict = None
+        ) -> dict:
     logging.info(
         f"Triggering tool {tool_name} in server nodes {server_node} and client nodes [{','.join(client_nodes)}]"
     )
 
     headers = _create_header(access_token)
+    headers['Content-Type'] = 'application/json'
 
-    url = f"{api_prefix}/tools/job/{tool_name}/"
+    url = f"{api_prefix}/tools/job/{tool_name}"
+
     url_params = []
+
+    if server_node is not None:
+        url_params.append(f"server_node={server_node}")   
 
     if client_nodes is not None:
         for node in client_nodes:
             url_params.append(f"client_nodes={node}")
 
-    if server_node is not None:
-        url_params.append(f"server_node={server_node}")   
-
     if url_params:
         url += f'?{"&".join(url_params)}'
 
-    logging.info("\t-- FEM URL = {}".format(url))
+    logging.debug("\t-- FEM URL = {}".format(url))
 
     params_data = json.dumps(params) if params is not None else "{}"
 
     response_data = requests.post(url, headers=headers, data=params_data)
-    
-    response_data.raise_for_status()
+
+    if response_data.status_code != 200:
+        response_data.raise_for_status()
 
     return response_data.json()
 
@@ -172,8 +177,8 @@ def dt4h_demonstrator(
                 client_active_nodes.append(node)
     else:
         client_active_nodes = client_node_list
-    logging.info(f"Active client nodes: {client_active_nodes}") 
-    
+    logging.info(f"Active client nodes: {client_active_nodes}")
+
     if not server_active_node or len(client_active_nodes) == 0:
         logging.error("No enough active nodes found.")
         return {'status': 'failure', 'message': 'No enough active nodes found.'}
@@ -194,7 +199,7 @@ def dt4h_demonstrator(
         })
     else:
         execution_id = step_one['result']['execution_id']
-
+    logging.info(f"Execution {execution_id} started")
     # STEP 2 - Do-while until the docker containing the tool dies
     while True:
         wait()
