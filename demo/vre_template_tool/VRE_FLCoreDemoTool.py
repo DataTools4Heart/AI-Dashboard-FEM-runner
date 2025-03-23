@@ -54,7 +54,6 @@ class myTool( Tool ):
             if isinstance(v, list):
                 self.configuration[k] = ' '.join(v)
 
-
         # Init variables
         self.current_dir = os.path.abspath(os.path.dirname(__file__))
         self.parent_dir = os.path.abspath(self.current_dir + "/../")

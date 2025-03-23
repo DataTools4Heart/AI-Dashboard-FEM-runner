@@ -7,7 +7,7 @@ import time
 import requests
 import logging
 import json
-from typing import List 
+from typing import List
 
 USERNAME = 'demo@bsc.es'
 PASSWORD = 'demo'
@@ -26,7 +26,7 @@ def wait(n: float = 1.5) -> None:
     time.sleep(n)
 
 
-# GET TOKEN FROM KEYCLOAK -- ONLY FOR TESTING PURPOSES
+# GET TOKEN FROM KEYCLOAK -- ONLY FOR TESTING PURPOSES - SHOULD COME FROM VRE
 # ----------------------------------------------------------------------------
 # Returns new access token using basic auth
 def get_FEM_token(user: str, pwd: str) -> str:
@@ -44,7 +44,9 @@ def get_FEM_token(user: str, pwd: str) -> str:
     if response.status_code == 200:
         return response.json().get('access_token')
     else:
-        raise Exception(f"Failed to obtain token: {response.status_code}, {response.text}")
+        raise Exception(
+            f"Failed to obtain token: {response.status_code}, {response.text}"
+        )
 
 
 # NODES HEALTH CHECK
@@ -210,11 +212,15 @@ def dt4h_demonstrator(
 
     return {'status': 'success', 'message': f"Tool \"{tool_id}\" run on server {server_active_node} and clients {client_active_nodes}." }
 
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     dt4h_demonstrator(
         API_PREFIX,
         server_node='BSC',
         client_node_list=['BSC'],
+        tool_id='flcore',
+        tool_name='FLcore',
+        input_params={},
         health_check=True
     )
