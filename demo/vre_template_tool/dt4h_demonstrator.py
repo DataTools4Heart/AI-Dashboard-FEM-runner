@@ -7,6 +7,7 @@ import time
 import requests
 import logging
 import json
+import argparse
 from typing import List
 
 USERNAME = 'demo@bsc.es'
@@ -75,7 +76,7 @@ def execute_tool(
             server_node: str,
             client_nodes: List[str],
             tool_name: str,
-            params: dict = None
+            params: str = "{}"
         ) -> dict:
     logging.info(
         f"Triggering tool {tool_name} in server nodes {server_node} and client nodes [{','.join(client_nodes)}]"
@@ -100,7 +101,11 @@ def execute_tool(
 
     logging.debug("\t-- FEM URL = {}".format(url))
 
-    params_data = json.dumps(params) if params is not None else "{}"
+    if isinstance(params, dict):
+        params_data = json.dumps(params)
+    else:
+        params_data = params
+    #
 
     response_data = requests.post(url, headers=headers, data=params_data)
 
@@ -138,7 +143,7 @@ def dt4h_demonstrator(
         access_token: str = None,
         server_node: str = None,
         client_node_list: list[str] = None,
-        input_params: dict = {},
+        input_params: dict = "{}",
         tool_id: str = 'flcore',
         tool_name: str = 'FLcore',
         health_check: bool = False
@@ -168,6 +173,9 @@ def dt4h_demonstrator(
     else:
         server_active_node = server_node
     logging.info(f"Active server node: {server_active_node}")
+
+    if isinstance(client_node_list, str):
+        client_node_list = client_node_list.split(',')
 
     client_active_nodes = []
     if health_check:
@@ -223,12 +231,21 @@ def dt4h_demonstrator(
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--server_node', type=str, help='Server node', default='BSC')
+    argparser.add_argument('--client_node_list', type=str, help='Client nodes, comma sep', default='BSC')
+    argparser.add_argument('--tool_id', type=str, default='flcore')
+    argparser.add_argument('--tool_name', type=str, default='FLcore')
+    argparser.add_argument('--input_params', type=str, help='Application parameters (JSON)', default="{}")
+    argparser.add_argument('--health_check', action='store_true', help='Perform heartbeat before executing')
+    args = argparser.parse_args()
+
     dt4h_demonstrator(
         API_PREFIX,
-        server_node='BSC',
-        client_node_list=['BSC'],
-        tool_id='flcore',
-        tool_name='FLcore',
-        input_params={},
-        health_check=True
+        server_node=args.server_node,
+        client_node_list=args.client_node_list,
+        tool_id=args.tool_id,
+        tool_name=args.tool_name,
+        input_params=args.input_params,
+        health_check=args.health_check
     )
