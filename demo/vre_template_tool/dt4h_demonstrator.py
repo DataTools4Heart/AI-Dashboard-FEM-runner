@@ -95,7 +95,6 @@ def execute_tool(
     logging.info(
         f"Triggering tool {tool_name} in server nodes {server_node} and client nodes [{','.join(client_nodes)}]"
     )
-    '''Execute a tool on the specified nodes.'''
 
     headers = _create_header(access_token)
     headers['Content-Type'] = 'application/json'
@@ -117,18 +116,13 @@ def execute_tool(
     logging.debug(f"\t-- FEM URL = {url}")
 
     if params is None:
-        params_data = {}
-    else:
-        if isinstance(params, str):
-            try:
-                params = json.loads(params)
-            except json.JSONDecodeError:
-                logging.error("Failed to parse params as JSON")
-                raise ValueError("Params must be a valid JSON string or dictionary")   
-        if isinstance(params, dict):
-            params_data = json.dumps(params)
-        else:
-            params_data = params
+        params = {'num_clients': len(client_nodes)}
+
+    try:
+        params_data = json.dumps(params)
+    except Exception as e:
+        logging.error(f"Failed to serialize params to JSON: {e}")
+        return {'status': 'failure', 'message': f"Failed to serialize params: {e}"}
 
     logging.debug(f"\t-- FEM params = {params_data}")
 
@@ -166,6 +160,7 @@ def check_job_finished(job_status: dict) -> bool:
     if not job_status:
         logging.error("Job status is empty")
         return False
+    print(f"Job status: {job_status}")
     for node_status in job_status:
         if 'status' not in node_status:
             logging.error(f"Node status does not contain 'status': {node_status}")
@@ -228,7 +223,6 @@ def download_file(
     '''Download a file from the execution of a tool on a specific node.'''  
     headers = _create_header(access_token)
     url = f"{api_prefix}/data/download_files?execution_id={execution_id}&file={file_name}&node={node}"
-    print(f"Downloading file from URL: {url}")
     logging.debug(f"Downloading file from URL: {url}")      
     response = requests.get(
         url,
@@ -250,8 +244,7 @@ def dt4h_demonstrator(
         access_token: str = None,
         server_node: str = None,
         client_node_list: list[str] = None,
-        input_params: dict = "{}",
-        tool_id: str = 'flcore',
+        input_params_path: str = None,
         tool_name: str = 'fLcore', 
         health_check: bool = False
     ) -> dict:
@@ -311,8 +304,24 @@ def dt4h_demonstrator(
         return {'status': 'failure', 'message': 'No enough active nodes found.'}
 
     all_nodes = set([server_active_node] + client_active_nodes)
-
-    logging.info(f"Running tool {tool_id} on nodes")
+    if input_params_path is None:
+        input_params = {}
+    else:
+        try:
+            with open(input_params_path, 'r') as f:
+                if input_params_path.endswith('.json'):
+                    input_params = json.load(f)
+                elif input_params_path.endswith('.yml') or input_params_path.endswith('.yaml'):
+                    import yaml
+                    input_params = yaml.safe_load(f)
+                else:
+                    raise ValueError("Unsupported file format. Use JSON or YAML.")
+        except Exception as e:
+            logging.error(f"Failed to load input parameters from {input_params_path}: {e}")
+            return {'status': 'failure', 'message': f"Failed to load input parameters: {e}"} 
+    
+    input_params['num_clients'] = len(client_active_nodes)
+    logging.info(f"Running tool {tool_name} on nodes")
     step_one = execute_tool(
         api_prefix,
         access_token,
@@ -334,6 +343,7 @@ def dt4h_demonstrator(
     start_time = time.time()
     while True:
         wait()
+        job_status = None
         job_status = inquiry_execution_status(api_prefix, access_token, execution_id)
         logging.info(f"Job status: {job_status}")
         if check_job_finished(job_status):
@@ -369,7 +379,7 @@ def dt4h_demonstrator(
 
     return {
         'status': 'success', 
-        'message': f"Tool \"{tool_id}\" run on server {server_active_node} and clients {client_active_nodes}.",
+        'message': f"Tool \"{tool_name}\" run on server {server_active_node} and clients {client_active_nodes}.",
         'execution_id': execution_id,
         'execution_logs': execution_logs,
         'files': files
@@ -383,17 +393,17 @@ if __name__ == '__main__':
     argparser.add_argument('--client_node_list', type=str, help='Client nodes, comma sep', default='BSC')
     argparser.add_argument('--tool_id', type=str, default='flcore')
     argparser.add_argument('--tool_name', type=str, default='FLcore')
-    argparser.add_argument('--input_params', type=str, help='Application parameters (JSON|YML)', default="{}")
+    argparser.add_argument('--input_params_path', type=str, help='Path to Application parameters (JSON|YML)')
     argparser.add_argument('--health_check', action='store_true', help='Perform heartbeat before executing')
     args = argparser.parse_args()
 
+ 
     execution_results = dt4h_demonstrator(
         API_PREFIX,
         server_node=args.server_node,
         client_node_list=args.client_node_list,
-        tool_id=args.tool_id,
         tool_name=args.tool_name,
-        input_params=args.input_params, # TODO accept YAML
+        input_params_path=args.input_params_path,
         health_check=args.health_check
     )
     print(json.dumps(execution_results, indent=2))
