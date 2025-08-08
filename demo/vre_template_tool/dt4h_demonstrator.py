@@ -252,7 +252,7 @@ def dt4h_demonstrator(
         client_node_list: list[str] = None,
         input_params: dict = "{}",
         tool_id: str = 'flcore',
-        tool_name: str = 'FLcore',
+        tool_name: str = 'fLcore', 
         health_check: bool = False
     ) -> dict:
     """ Run the DT4H demonstrator tool on the specified nodes."""
@@ -347,7 +347,7 @@ def dt4h_demonstrator(
     #Files at sites
     files = get_execution_file_list(
         api_prefix, access_token, execution_id, all_nodes
-    )
+    )[0]
     logging.info(f"Files at sites: {files}")
     #Download files
 
@@ -359,12 +359,13 @@ def dt4h_demonstrator(
             file_content = download_file(
                 api_prefix, access_token, execution_id, node, file
             )
-            print(file_content)
-            # with open(f"{node}_{file}", 'wb') as f:
-            #     f.write(file_content)
-            #     logging.info(f"Downloaded file {file} from node {node}")
-            # else:
-            #     logging.error(f"Failed to download file {file} from node {node}: {response.status_code}, {response.text}")
+            if (file_content):
+                with open(f"{node}_{file}", 'wb') as f:
+                    f.write(file_content)
+                    logging.info(f"Downloaded file {file} from node {node}")
+            else:
+                logging.error(f"Failed to download file {file} from node {node}")
+                
 
     return {
         'status': 'success', 
