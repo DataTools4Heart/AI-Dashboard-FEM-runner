@@ -88,11 +88,10 @@ def execute_tool(
     '''Execute a tool on the specified nodes and return the execution ID.'''
     if not tool_name:
         raise ValueError("Tool name must be provided")
-    logging.info(
-        f"Triggering tool {tool_name} in server nodes {server_node} and client nodes [{','.join(client_nodes)}]"
-    )
+    
     headers = _create_header(access_token)
     headers['Content-Type'] = 'application/json'
+    
     url = f"tools/job/{tool_name}"
     url_params = []
     if server_node is not None:
@@ -103,7 +102,7 @@ def execute_tool(
     if url_params:
         url += f'?{"&".join(url_params)}'
 
-    logging.debug(f"\t-- FEM URL = {url}")
+    logging.info(f"\t-- FEM URL = {url}")
 
     if params is None:
         params = {'num_clients': len(client_nodes)}
@@ -116,11 +115,16 @@ def execute_tool(
 
     logging.debug(f"\t-- FEM params = {params_data}")
 
-    response_data = do_post_request(url, headers=headers, data=params_data)
+    logging.info(
+        f"Triggering tool {tool_name} in server nodes {server_node} and client nodes [{','.join(client_nodes)}]"
+    )
 
-    if response_data.get('status') != 'success':
+    response_data = do_post_request(url, headers=headers, data=params_data)
+    print(response_data)
+
+    if response_data.get('status') != 'success' or 'execution_id' not in response_data:
         raise Exception("Submission failed")
-    
+
     return response_data
 
 
@@ -129,7 +133,7 @@ def execute_tool(
 def inquiry_execution_status(access_token: str, execution_id: str) -> dict:
     '''Check the status of the execution of a tool.'''
     return do_get_request(
-        f'executions/status/{execution_id}', 
+        f'executions/status/{execution_id}',
         headers=_create_header(access_token)
     )
 
@@ -151,11 +155,11 @@ def check_job_finished(job_status: dict) -> bool:
     logging.info("All nodes are not running, job is finished")
     return True
 
-def get_execution_logs(api_prefix, access_token: str, execution_id: str) -> dict:
+def get_execution_logs(access_token: str, execution_id: str) -> dict:
     '''Get the logs of the execution of a tool.'''
     headers = _create_header(access_token)
 
-    url = f'{api_prefix }/executions/logs/{execution_id}'
+    url = f'{API_PREFIX}/executions/logs/{execution_id}'
     response_data = requests.get(
         url,
         headers=headers,
@@ -178,11 +182,7 @@ def get_execution_file_list(
         raise ValueError("Node list cannot be empty")
     url = f'data/list_files?execution_id={execution_id}&{"&".join(nodes)}&path=/sandbox'
     logging.debug(f"URL: {API_PREFIX}{url}")
-    try:
-        return do_get_request(url, headers=headers)
-    except Exception as e:
-        logging.error(f"Failed to get execution files: {e}")
-        return {}
+    return do_get_request(url, headers=headers)
 
 def download_file(
         access_token: str,
@@ -209,8 +209,7 @@ def download_file(
 # FULL PIPELINE
 # ----------------------------------------------------------------------------
 def dt4h_demonstrator(
-        api_prefix: str,
-        access_token: str = os.environ.get('AUTH_TOKEN'),
+        access_token: str = None,
         server_node: str = None,
         client_node_list: list[str] = None,
         input_params_path: str = None,
@@ -218,19 +217,22 @@ def dt4h_demonstrator(
         health_check: bool = False
     ) -> dict:
     """ Run the DT4H demonstrator tool on the specified nodes."""
-    logging.info("Starting DT4H demonstrator")
-
+    logging.info("Starting DT4H FLCore demonstrator")
+    logging.info(f"API_PREFIX: {API_PREFIX}")
+    access_token = os.environ.get('FEM_ACCESS_TOKEN')
     if access_token is None:
         logging.info("Getting token from Keycloak")
         access_token = get_FEM_token(os.environ.get('FEM_USER_NAME'), os.environ.get('FEM_USER_PASSWORD'))
     if access_token is None:
         logging.error("Failed to obtain access token")
-        return {'status': 'failure', 'message': 'Failed to obtain access token'}
-    
-    logging.info("Checking nodes health")
-    server_active_node = None
-    if health_check:
+        return {'status': 'failure', 'message': 'Failed to obtain access token'}git st
+    if not health_check:
+        logging.info("Health check is disabled, proceeding without it")
+        server_active_node = server_node
+        client_active_nodes = client_node_list
+    else:
         health_sites_data = {}
+        server_active_node = None
         logging.info("Checking server health")
         health_check_data = node_heartbeat(access_token, server_node)
         logging.info(f"server: {health_check_data}")
@@ -242,15 +244,11 @@ def dt4h_demonstrator(
         if 'state' in health_check_data[0] and health_check_data[0]['state'] == 'running':
             server_active_node = server_node
         health_sites_data[server_node] = health_check_data[0]
-    else:
-        server_active_node = server_node
-    logging.info(f"Active server node: {server_active_node}")
 
-    if isinstance(client_node_list, str):
-        client_node_list = client_node_list.split(',')
+        if isinstance(client_node_list, str):
+            client_node_list = client_node_list.split(',')
 
-    client_active_nodes = []
-    if health_check:
+        client_active_nodes = []
         logging.info("Checking client nodes health")
         for node in client_node_list:
             health_check_data = node_heartbeat(access_token, node)
@@ -261,8 +259,11 @@ def dt4h_demonstrator(
             if 'state' in health_check_data[0] and health_check_data[0]['state'] == 'running':
                 client_active_nodes.append(node)
             health_sites_data[node] = health_check_data[0]
-    else:
-        client_active_nodes = client_node_list
+        logging.info("Logging Health check data on file health_data.json")
+        with open("health_data.json", "w", encoding='utf-8') as f:
+            json.dump(health_sites_data, f, indent=4)
+
+    logging.info(f"Active server node: {server_active_node}")
     logging.info(f"Active client nodes: {client_active_nodes}")
 
     if not server_active_node or len(client_active_nodes) == 0:
@@ -320,7 +321,7 @@ def dt4h_demonstrator(
             continue
         logging.info(f"Job status: {job_status}")
         if check_job_finished(job_status):
-            execution_logs = get_execution_logs(api_prefix, access_token, execution_id)
+            execution_logs = get_execution_logs(access_token, execution_id)
             logging.info(f"Execution logs: {execution_logs}")
             break
         if time.time() - start_time > JOB_TIMEOUT:
@@ -330,11 +331,14 @@ def dt4h_demonstrator(
     # Allowing time for the tool to finish
     wait(10)
     #Files at sites
-    files = get_execution_file_list(access_token, execution_id, all_nodes)
-    if isinstance(files,list):
-        files = files[0] # Normal output, but sometimes comes as a dict
-
-    logging.info(f"Files at sites: {files}")
+    try:
+        files = get_execution_file_list(access_token, execution_id, all_nodes)
+        if isinstance(files,list):
+            files = files[0] # Normal output, but sometimes comes as a dict
+        logging.info(f"Files at sites: {files}")
+    except Exception as e:
+        logging.error(f"Failed to get execution files: {e}")
+        return {'status': 'failure', 'message': f"Failed to get execution files: {e}"}
 
     #Download files
     for node in all_nodes:
@@ -374,7 +378,6 @@ if __name__ == '__main__':
 
  
     execution_results = dt4h_demonstrator(
-        API_PREFIX,
         server_node=args.server_node,
         client_node_list=args.client_node_list,
         tool_name=args.tool_name,
