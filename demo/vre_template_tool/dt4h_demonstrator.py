@@ -42,8 +42,8 @@ def dt4h_demonstrator(
     # Authenticate with the FEM API
     # Use token or user/pass as fallback
     api_client.authenticate(
-        authtoken=os.environ.get('FEM_ACCESS_TOKEN'), 
-        user=os.environ.get('FEM_USER_NAME'), 
+        authtoken=os.environ.get('FEM_ACCESS_TOKEN'),
+        user=os.environ.get('FEM_USER_NAME'),
         password=os.environ.get('FEM_USER_PASSWORD')
     )
 
@@ -136,11 +136,11 @@ def dt4h_demonstrator(
         msg = f"Failed to execute tool {tool_name} on nodes {all_nodes}: {e}"
         logging.error(msg)
         return {'status': 'failure', 'message': msg}
-    
+
     # Allowing time for the results to settle
     logging.info(f"Allowing time for results to settle ({FINISH_WAIT}s)")
     time.sleep(FINISH_WAIT)
-    
+
     #Files at sites
     try:
         files = api_client.get_execution_file_list()
@@ -167,10 +167,10 @@ def dt4h_demonstrator(
                 logging.error(f"Failed to download file {file} from node {node}: {e}")
 
     return {
-        'status': 'success', 
+        'status': 'success',
         'message': f"Tool \"{tool_name}\" run on server {api_client.server_node} and clients {api_client.client_nodes}.",
-        'execution_id': api_client.execution_id,
-        'execution_logs': api_client.execution_logs,
+        'execution_id': api_client.execution.id,
+        'execution_logs': api_client.execution.logs,
         'files': files
     }
 
@@ -185,7 +185,7 @@ if __name__ == '__main__':
     argparser.add_argument('--health_check', action='store', help='Perform heartbeat before executing and store at file')
     args = argparser.parse_args()
 
- 
+
     execution_results = dt4h_demonstrator(
         server_node=args.server_node,
         client_node_list=args.client_node_list,
@@ -196,5 +196,5 @@ if __name__ == '__main__':
 
     print(json.dumps(execution_results, indent=4))
 
-    
-    
+
+

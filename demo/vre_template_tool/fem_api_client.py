@@ -10,27 +10,45 @@ REQUEST_TIMEOUT = 500  # seconds
 
 # API ENDPOINTS
 URL_TOKEN = 'token'
+URL_HOSTS = 'hosts'
+URL_RESOURCES = 'hosts/resources'
 URL_HEARTBEAT = 'hosts/heartbeat'
+URL_HOSTS_INFO = 'hosts'
+URL_TASKS = 'tasks'
+URL_TASK_INFO = 'tasks'
+URL_TOOLS = 'tools'
+URL_TOOL_INFO = 'tools'
+URL_TOOL_ID = 'tools/name'
 URL_SUBMIT = 'tools/job/'
 URL_STATUS = 'executions/status'
+URL_CANCEL = 'executions/cancel_run'
 URL_LOGS = 'executions/logs'
+URL_REPORT = "executions/report"
 URL_FILES = 'data/list_files'
 URL_DOWNLOAD = 'data/download_files'
+
+
+class Execution:
+    '''Wrapper for execution data'''
+    def __init__(self, execution=None):
+        self.data = execution
+        self.id = execution.get('execution_id')
+        self.status = None
+        self.logs = None
 
 class FEMAPIClient:
     """Client for interacting with the FEM API."""
     def __init__(self, api_prefix):
         self.api_prefix = api_prefix
         self.token = None
+        self.tool_name = None
         self.health_sites_data = {}
         self.server_node = None
         self.client_nodes = []
-        self.execution_id = None
-        self.job_status = None
-        self.execution_logs = None
-        
-    
+        self.execution = None
 
+    # Authentication
+    # ---------------------------------------------------------------------------------------------
     def authenticate(self, authtoken:str = None, user:str = None, password:str = None):
         """Authenticate with the FEM API using a token."""
         if authtoken:
@@ -47,6 +65,23 @@ class FEMAPIClient:
             }
             response_json = self._do_post_request('token', headers=headers, data=data)
             self.token = response_json.get('access_token')
+
+    # Nodes
+    # ----------------------------------------------------------------------------------------------
+    def get_nodes(self) -> dict:
+        '''Get the list of available hosts.'''
+        return self._do_get_request(URL_HOSTS, headers=self._create_auth_header())
+
+    def node_resources(self, node_list: str|list[str]) -> dict:
+        '''Get the list of available resources.'''
+        if isinstance(node_list, str):
+            node_list = [node_list]
+        query = [f'client_nodes={node}' for node in node_list]
+        return self._do_get_request(
+            URL_RESOURCES,
+            query_params='&'.join(query),
+            headers=self._create_auth_header()
+        )
 
     def node_heartbeat(self, node: str|list[str]) -> dict:
         '''Check the heartbeat of a node.'''
@@ -67,6 +102,54 @@ class FEMAPIClient:
                 hbeats[node_id] = hbeats[node_id][0] # !!!!!! Unstable format
             self.health_sites_data[node_id] = hbeats[node_id]
 
+    def node_info(self, node_id: str) -> dict:
+        '''Get information about a specific node.'''
+        return self._do_get_request(
+            f'{URL_HOSTS_INFO}/{node_id}',
+            headers=self._create_auth_header()
+        )
+
+    # Tools and Tasks
+    # ---------------------------------------------------------------------------------------------
+
+    def get_tools(self) -> dict:
+        '''Get the list of available tools.'''
+        return self._do_get_request(
+            URL_TOOLS,
+            headers=self._create_auth_header()
+        )
+
+    def tool_info(self, tool_id: str) -> dict:
+        '''Get information about a specific tool.'''
+        return self._do_get_request(
+            f'{URL_TOOL_INFO}/{tool_id}',
+            headers=self._create_auth_header()
+        )
+
+    def get_tool_id_from_name(self, tool_name: str) -> dict:
+        '''Get information about a specific tool by name.'''
+        return self._do_get_request(
+            f'{URL_TOOL_ID}/{tool_name}',
+            headers=self._create_auth_header()
+        )
+
+    def get_tasks(self) -> dict:
+        '''Get the list of available tasks.'''
+        return self._do_get_request(
+            URL_TASKS,
+            headers=self._create_auth_header()
+        )
+
+    def task_info(self, task_id: str) -> dict:
+        '''Get information about a specific task.'''
+        return self._do_get_request(
+            f'{URL_TASK_INFO}/{task_id}',
+            headers=self._create_auth_header()
+        )
+
+    # Job management
+    # ---------------------------------------------------------------------------------------------
+
     def submit_tool(self, props: dict = None) -> dict:
         '''Submit a tool on the specified nodes and return the execution ID.'''
 
@@ -83,24 +166,28 @@ class FEMAPIClient:
         if url_params:
             url += f'?{"&".join(url_params)}'
         logging.info(f"\t-- FEM URL = {url}")
-        
-        logging.info(
-            f"Triggering tool {props['tool_name']} in server nodes {self.server_node} and client nodes [{','.join(self.client_nodes)}]"
-        )
 
+        logging.info(
+            f"Triggering tool {props['tool_name']}"
+            f" in server nodes {self.server_node}"
+            f" and client nodes [{','.join(self.client_nodes)}]"
+        )
         response_data = self._do_post_request(url, headers=headers, data=props['input_params'])
 
         if response_data.get('status') != 'success' or 'execution_id' not in response_data:
             raise Exception("Submission failed")
-        
-        logging.info(f"Tool {props['tool_name']} submitted successfully {response_data}")   
 
-        self.execution_id = response_data['execution_id']
+        logging.info(f"Tool {props['tool_name']} submitted successfully {response_data}")
+
+        self.tool_name = props['tool_name']
+        self.execution = Execution(response_data)
+
         if props['wait_for_job']:
-            logging.info(f"Waiting for job {self.execution_id} to finish")
-            self.wait_for_job(interval=props.get('polling', 5.0), timeout=props.get('timeout', 300.0))
-
-        return response_data
+            logging.info(f"Waiting for job {self.execution.id} to finish")
+            self.wait_for_job(
+                interval=props.get('polling', 5.0),
+                timeout=props.get('timeout', 300.0)
+            )
 
     def wait_for_job(self, interval:float = 5.0, timeout:float = 300.0):
         '''Polling until job finishes'''
@@ -108,36 +195,55 @@ class FEMAPIClient:
         while True:
             logging.info(f"Waiting for {interval} seconds before checking job status...")
             time.sleep(interval)
-            self.job_status = self.execution_status()
-            logging.info(f"Job status: {self.job_status}")
+
+            self.execution.status = self.execution_status()
+            logging.info(f"Job status: {self.execution.status}")
+
             if self.check_job_finished():
-                self.execution_logs = self.get_execution_logs()
-                logging.info(f"Execution logs: {self.execution_logs}")
+                self.execution.logs = self.get_execution_logs()
+                logging.info(f"Execution logs: {self.execution.logs}")
                 break
+
             if time.time() - start_time > timeout:
                 logging.error(f"Job timed out after {timeout} seconds")
-                self.execution_logs = "Job timed out before completion."
+                self.execution.logs = "Job timed out before completion."
                 break
-    
+
+    def cancel_run(self) -> dict:
+        '''Cancel the execution of a tool.'''
+        return self._do_post_request(
+            f'{URL_CANCEL}/{self.execution.id}',
+            headers=self._create_auth_header()
+        )
+
     def execution_status(self) -> dict:
         '''Check the status of the execution of a tool.'''
         try:
             return self._do_get_request(
-                f'{URL_STATUS}/{self.execution_id}',
+                f'{URL_STATUS}/{self.execution.id}',
                 headers=self._create_auth_header()
             )
         except Exception as e:
             logging.error(f"Failed to get execution status: {e}")
             return {"error": str(e)}
-    
+
+    def execution_report(self) -> dict:
+        '''Get the execution report of a tool.'''
+        return self._do_get_request(
+            f'{URL_REPORT}/{self.execution.id}',
+            headers=self._create_auth_header()
+        )
+
     def check_job_finished(self) -> bool:
         '''Check if the job is finished based on the status of the nodes.
         If all nodes are not running, the job is considered finished.'''
-        if not self.job_status:
+        if not self.execution.status:
             logging.error("Job status is empty")
             return False
-        logging.info(f"Job status: {self.job_status}")
-        for node_status in self.job_status:
+
+        logging.info(f"Job status: {self.execution.status}")
+
+        for node_status in self.execution.status:
             if 'status' not in node_status:
                 logging.error(f"Node status does not contain 'status': {node_status}")
                 return False
@@ -147,11 +253,13 @@ class FEMAPIClient:
             logging.info(f"Node {node_status['node']} is finished")
         logging.info("No nodes are running, job is finished")
         return True
-    
+
+    # Data and logs
+    # ---------------------------------------------------------------------------------------------
     def get_execution_logs(self) -> dict:
         '''Get the logs of the execution of a tool.'''
         return self._do_get_request(
-            f'{URL_LOGS}/{self.execution_id}',
+            f'{URL_LOGS}/{self.execution.id}',
             headers=self._create_auth_header(),
             output='text'
         )
@@ -159,7 +267,7 @@ class FEMAPIClient:
     def get_execution_file_list(self) -> dict:
         '''Get the list of files generated by the execution of a tool on specified nodes.'''
         query = [f'nodes = {node}' for node in set([self.server_node] + self.client_nodes)]
-        query.append(f'execution_id={self.execution_id}')
+        query.append(f'execution_id={self.execution.id}')
         query.append('path=/sandbox')
         print(query)
         file_list = self._do_get_request(
@@ -167,18 +275,17 @@ class FEMAPIClient:
             headers=self._create_auth_header(),
             query_params='&'.join(query)
         )
-        print(f"File list: {file_list}")
         if isinstance(file_list, list):
             file_list = file_list[0]
         return file_list
 
 
     def download_file(self, node: str, file_name: str) -> bytes:
-        '''Download a file from the execution of a tool on a specific node.'''  
-        
+        '''Download a file from the execution of a tool on a specific node.'''
+
         url = f"{URL_DOWNLOAD}"
         params = {
-            'execution_id': self.execution_id,
+            'execution_id': self.execution.id,
             'file': file_name,
             'node': node
         }
@@ -189,7 +296,9 @@ class FEMAPIClient:
             query_params=params,
             output='binary'
         )
-#------------------------------------------------------------------------------------------------------------
+
+    # Communication
+    # ---------------------------------------------------------------------------------------------
     def _create_auth_header(self):
         '''Create the authorization header for API requests.'''
         return {
@@ -201,18 +310,24 @@ class FEMAPIClient:
         '''Perform a get request'''
         url = f"{self.api_prefix}/{endpoint}"
         try:
-            response = requests.get(url, params=query_params, headers=headers, timeout=REQUEST_TIMEOUT)
+            response = requests.get(
+                url,
+                params=query_params,
+                headers=headers,
+                timeout=REQUEST_TIMEOUT
+            )
             response.raise_for_status()
             if output == 'json':
                 return response.json()
-            elif output == 'binary':
+            if output == 'binary':
                 return response.content
-            elif output == 'text':
+            if output == 'text':
                 return response.text
         except requests.RequestException as e:
             logging.error(f"GET request failed: {e}")
             return {"error": str(e)}
-    
+        return {"error": "Unknown error"}
+
     def _do_post_request(self, endpoint, headers=None, data=None):
         '''Perform a post request'''
         url = f"{self.api_prefix}/{endpoint}"
