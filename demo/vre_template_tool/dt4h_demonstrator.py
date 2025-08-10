@@ -7,11 +7,8 @@ import os
 import time
 import logging
 import json
-import yaml
 import argparse
-from typing import List
-import requests
-
+import yaml
 from fem_api_client import FEMAPIClient
 
 API_PREFIX = 'https://fl.bsc.es/dt4h-fem/API/v1'
@@ -29,9 +26,6 @@ def dt4h_demonstrator(
         health_check_path: str = None
     ) -> dict:
     """ Run the DT4H demonstrator tool on the specified nodes."""
-    logging.info("Starting DT4H FLCore demonstrator")
-    logging.info(f"API_PREFIX: {API_PREFIX}")
-
     if not tool_name:
         return {'status': 'failure', 'message': 'Tool name must be provided'}
 
@@ -41,8 +35,17 @@ def dt4h_demonstrator(
     if not client_node_list:
         return {'status': 'failure', 'message': 'Client node list must be provided'}
 
+    logging.info(f"Starting DT4H {tool_name} demonstrator")
+    logging.info(f"Using FEM API: {API_PREFIX}")
+
     api_client = FEMAPIClient(API_PREFIX)
-    api_client.authenticate(authtoken=access_token, user=os.environ.get('FEM_USER_NAME'), password=os.environ.get('FEM_USER_PASSWORD'))
+    # Authenticate with the FEM API
+    # Use token or user/pass as fallback
+    api_client.authenticate(
+        authtoken=os.environ.get('FEM_ACCESS_TOKEN'), 
+        user=os.environ.get('FEM_USER_NAME'), 
+        password=os.environ.get('FEM_USER_PASSWORD')
+    )
 
     if api_client.token  is None:
         logging.error("Failed to obtain access token")
@@ -57,7 +60,8 @@ def dt4h_demonstrator(
         api_client.server_node = None
         logging.info("Checking server health")
         api_client.node_heartbeat(server_node)
-        if 'state' in api_client.health_sites_data[server_node] and api_client.health_sites_data[server_node]['state'] == 'running':
+        if 'state' in api_client.health_sites_data[server_node] and \
+                api_client.health_sites_data[server_node]['state'] == 'running':
             api_client.server_node = server_node
         logging.info(f"server: {api_client.health_sites_data[server_node]}")
         if isinstance(client_node_list, str):
@@ -71,23 +75,24 @@ def dt4h_demonstrator(
                 logging.error(f"No client heartbeat data found for node {node}")
                 return {'status': 'failure', 'message': 'No client heartbeat data found.'}
             logging.info(f"client: {api_client.health_sites_data[node]}")
-            if 'state' in api_client.health_sites_data[node] and api_client.health_sites_data[node]['state'] == 'running':
+            if 'state' in api_client.health_sites_data[node] and \
+                    api_client.health_sites_data[node]['state'] == 'running':
                 api_client.client_nodes.append(node)
 
         logging.info(f"Saving heartbeat data on file {health_check_path}")
         with open(health_check_path, "w", encoding='utf-8') as f:
             json.dump(api_client.health_sites_data, f, indent=4)
 
-    logging.info(f"Active server node: {api_client.server_node}")
-    logging.info(f"Active client nodes: {api_client.client_nodes}")
-
-    if not api_client.server_node or len(api_client.client_nodes) == 0:
-        logging.error("No enough active nodes found.")
-        return {'status': 'failure', 'message': 'No enough active nodes found.'}
+        if not api_client.server_node or len(api_client.client_nodes) == 0:
+            logging.error("No enough active nodes found.")
+            return {'status': 'failure', 'message': 'No enough active nodes found.'}
+        logging.info(f"Active server node: {api_client.server_node}")
+        logging.info(f"Active client nodes: {api_client.client_nodes}")
 
     all_nodes = set([api_client.server_node] + api_client.client_nodes)
 
     # Tool Submission
+    # Formatting input parameters
     if input_params_path is None:
         input_params = {}
     else:
@@ -118,7 +123,7 @@ def dt4h_demonstrator(
     logging.info(f"Running tool {tool_name} on nodes")
 
     try:
-        step_one = api_client.submit_tool(
+        api_client.submit_tool(
             {
                 'tool_name': tool_name,
                 'input_params': params_data,
@@ -131,7 +136,7 @@ def dt4h_demonstrator(
         msg = f"Failed to execute tool {tool_name} on nodes {all_nodes}: {e}"
         logging.error(msg)
         return {'status': 'failure', 'message': msg}
-
+    
     # Allowing time for the results to settle
     logging.info(f"Allowing time for results to settle ({FINISH_WAIT}s)")
     time.sleep(FINISH_WAIT)
@@ -188,4 +193,8 @@ if __name__ == '__main__':
         input_params_path=args.input_params_path,
         health_check_path=args.health_check
     )
+
+    print(json.dumps(execution_results, indent=4))
+
+    
     
