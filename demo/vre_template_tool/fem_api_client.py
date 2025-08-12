@@ -98,8 +98,10 @@ class FEMAPIClient:
             except Exception as e:
                 logging.error(f"Failed to get heartbeat for node {node_id}: {e}")
                 hbeats[node_id] = {'error': str(e)}
-            if isinstance(hbeats[node_id], list):
+            if isinstance(hbeats[node_id], list) and len(hbeats[node_id]) > 0:
                 hbeats[node_id] = hbeats[node_id][0] # !!!!!! Unstable format
+                if len(hbeats[node_id]) == 0:
+                    hbeats[node_id] = {'error': 'No heartbeat data available'}
             self.health_sites_data[node_id] = hbeats[node_id]
 
     def node_info(self, node_id: str) -> dict:

@@ -10,6 +10,7 @@ import json
 import argparse
 import yaml
 from fem_api_client import FEMAPIClient
+from flcore_params import FlcoreParams, FlcoreDataset
 
 API_PREFIX = 'https://fl.bsc.es/dt4h-fem/API/v1'
 JOB_TIMEOUT = 60 * 5  # 5 minutes
@@ -17,13 +18,13 @@ POLLING_INTERVAL = 1.5  # seconds
 REQUEST_TIMEOUT = 700  # seconds
 FINISH_WAIT = 10  # seconds
 
-def dt4h_demonstrator(
-        access_token: str = None,
+def dt4h_flcore(
         server_node: str = 'BSC',
         client_node_list: list[str] = None,
         input_params_path: str = None,
         tool_name: str = 'fLcore',
-        health_check_path: str = None
+        health_check_path: str = None,
+        input_dataset_path: str = None
     ) -> dict:
     """ Run the DT4H demonstrator tool on the specified nodes."""
     if not tool_name:
@@ -91,36 +92,21 @@ def dt4h_demonstrator(
 
     all_nodes = set([api_client.server_node] + api_client.client_nodes)
 
+    # Input params
+    flcore_dataset = FlcoreDataset(input_dataset_path=input_dataset_path)
     # Tool Submission
-    # Formatting input parameters
-    if input_params_path is None:
-        input_params = {}
-    else:
-        try:
-            with open(input_params_path, 'r', encoding='utf-8') as params_file:
-                if input_params_path.endswith('.json'):
-                    input_params = json.load(params_file)
-                elif input_params_path.endswith('.yml') or input_params_path.endswith('.yaml'):
-                    input_params = yaml.safe_load(params_file)
-                else:
-                    return {'status': 'failure', 'message': 'Unsupported file format. Use JSON or YAML.'}
-        except json.JSONDecodeError as e:
-            logging.error(f"Failed to load input parameters from {input_params_path}: {e}")
-            return {'status': 'failure', 'message': f"Failed to load input parameters file: {e}"}
-        except yaml.YAMLError as e:
-            logging.error(f"Failed to load input parameters from {input_params_path}: {e}")
-            return {'status': 'failure', 'message': f"Failed to load input parameters file: {e}"}
-
-    input_params['num_clients'] = len(api_client.client_nodes)
-    try:
-        params_data = json.dumps(input_params)
-    except Exception as e:
-        logging.error(f"Failed to serialize params to JSON: {e}")
-        return {'status': 'failure', 'message': f"Failed to serialize input params: {e}"}
+    flcore_params = FlcoreParams(
+        input_params_path=input_params_path,
+        num_clients=len(api_client.client_nodes),
+        dataset_id=flcore_dataset.get_dataset_id()
+    )
+    params_data = flcore_params.get_params_json()
 
     logging.debug(f"FEM params = {params_data}")
 
     logging.info(f"Running tool {tool_name} on nodes")
+
+    print(params_data)
 
     try:
         api_client.submit_tool(
@@ -182,16 +168,18 @@ if __name__ == '__main__':
     argparser.add_argument('--client_node_list', type=str, help='Client nodes, comma sep', default='BSC')
     argparser.add_argument('--tool_name', type=str, default='flcore')
     argparser.add_argument('--input_params_path', type=str, help='Path to Application parameters (JSON|YML)')
+    argparser.add_argument('--input_dataset_path', type=str, help='Path to Input dataset reference (JSON)')
     argparser.add_argument('--health_check', action='store', help='Perform heartbeat before executing and store at file')
     args = argparser.parse_args()
 
 
-    execution_results = dt4h_demonstrator(
+    execution_results = dt4h_flcore(
         server_node=args.server_node,
         client_node_list=args.client_node_list,
         tool_name=args.tool_name,
         input_params_path=args.input_params_path,
-        health_check_path=args.health_check
+        health_check_path=args.health_check,
+        input_dataset_path=args.input_dataset_path
     )
 
     print(json.dumps(execution_results, indent=4))
