@@ -21,6 +21,9 @@ DEFAULT_TARGET_LABEL = 'conditions_stroke_any'
 class FlcoreDataset:
     ''' Class to represent the FLCore dataset as stored in VRE user space'''
     def __init__(self, input_dataset_path: str = None):
+        if input_dataset_path is None:
+            self.dataset = {}
+            return
         with open(input_dataset_path, 'r', encoding='utf-8') as dataset_file:
             try:
                 self.dataset = json.load(dataset_file)
@@ -37,6 +40,17 @@ class FlcoreParams:
     def __init__(self, input_params_path: str = None, num_clients:int = 1, dataset_id: str = None):
         if input_params_path is None:
             input_params = {}
+            self.input_params = {
+                'server': {
+                    'n_features': len(DEFAULT_TRAIN_LABELS),
+                    'num_rounds': 1,
+                    'num_clients': num_clients
+                },
+                'model': 'random_forest',
+                'train_labels': ' '.join(DEFAULT_TRAIN_LABELS),
+                'target_label': DEFAULT_TARGET_LABEL,
+                'data_id': dataset_id
+            }
         else:
             try:
                 with open(input_params_path, 'r', encoding='utf-8') as params_file:
@@ -50,7 +64,7 @@ class FlcoreParams:
                 logging.error(f"Failed to load input parameters from {input_params_path}: {e}")
                 raise ValueError(f"Failed to load input parameters file: {e}")
 
-            self.self_params = {
+            self.input_params = {
                 'server': {
                     'n_features': len(input_params['train_labels']),
                     'num_rounds': input_params.get('num_rounds', 1),
@@ -66,7 +80,7 @@ class FlcoreParams:
     def get_params_json(self):
         '''Get the FLCore parameters as a JSON string.'''
         try:
-            return json.dumps(self.self_params)
+            return json.dumps(self.input_params)
         except (TypeError, json.JSONDecodeError) as e:
             logging.error(f"Failed to serialize params to JSON: {e}")
             return {'status': 'failure', 'message': f"Failed to serialize input params: {e}"}

@@ -97,7 +97,7 @@ class myTool( Tool ):
             self.run_flcore_demo(input_files, output_file_path)
             # HERE GOES YOUR TOOL'S FUNCTION EXECUTION
 
-            # Validate output 
+            # Validate output
             if os.path.isfile(output_file_path):
                 output_file_path = os.path.abspath(self.execution_path + "/" + output_file_path)
                 output_files[output_id] = [(output_file_path, "file")]
@@ -136,14 +136,11 @@ class myTool( Tool ):
             print("\n-- Expected output is:")
             print(output_file_path)
             return dt4h_demonstrator(
-                self.configuration.get('api_prefix'),
-                self.configuration.get('token'),
-                input_metadata['server_node'],
-                input_metadata['client_node_list'].split(","),
-                input_metadata['input_params'],
-                'flcore'
-                'FLCore',
-                input_metadata['health_check']
+                server_node=input_metadata['server_node'],
+                client_node_list=input_metadata['client_node_list'].split(","),
+                tool_name='flcore',
+                input_params_path=input_metadata['input_params_path'],
+                health_check_path='health_check.json'
             )
 
         except:

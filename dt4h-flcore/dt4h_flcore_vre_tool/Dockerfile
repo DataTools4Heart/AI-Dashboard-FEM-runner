@@ -1,5 +1,5 @@
 #INTEGRATE YOUR TOOL'S CONTAINER
-FROM lcodo/demo_application:1.0
+FROM dt4h-flcore
 
 #---------- DO NOT EDIT BELOW HERE ------------------------------------------------------------# 
 #INSTALL openVRE DEPENDENCIES

@@ -14,7 +14,7 @@ from flcore_params import FlcoreParams, FlcoreDataset
 
 API_PREFIX = 'https://fl.bsc.es/dt4h-fem/API/v1'
 JOB_TIMEOUT = 60 * 5  # 5 minutes
-POLLING_INTERVAL = 1.5  # seconds
+POLLING_INTERVAL = 2  # seconds
 REQUEST_TIMEOUT = 700  # seconds
 FINISH_WAIT = 10  # seconds
 
@@ -81,8 +81,11 @@ def dt4h_flcore(
                 api_client.client_nodes.append(node)
 
         logging.info(f"Saving heartbeat data on file {health_check_path}")
-        with open(health_check_path, "w", encoding='utf-8') as f:
-            json.dump(api_client.health_sites_data, f, indent=4)
+        try:
+            with open(health_check_path, "w", encoding='utf-8') as f:
+                json.dump(api_client.health_sites_data, f, indent=4)
+        except Exception as e:
+            logging.error(f"Failed to save health check data: {e}")
 
         if not api_client.server_node or len(api_client.client_nodes) == 0:
             logging.error("No enough active nodes found.")
