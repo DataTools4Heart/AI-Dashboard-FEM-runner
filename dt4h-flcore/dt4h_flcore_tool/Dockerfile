@@ -1,5 +1,5 @@
 FROM ubuntu:22.04
-RUN apt-get update && apt-get install -y python3 python3-pip
+RUN apt-get update && apt-get install -y python3-pip
 RUN pip install requests pyyaml
 RUN mkdir /home/workdir
 WORKDIR /home

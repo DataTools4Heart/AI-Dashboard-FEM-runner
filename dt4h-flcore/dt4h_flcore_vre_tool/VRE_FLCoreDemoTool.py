@@ -25,7 +25,9 @@ from glob import glob
 # from basic_modules.tool import Tool
 # from utils import logger
 
-from dt4h_demonstrator import dt4h_demonstrator
+from fem_api_client import FEMAPIClient
+from flcore_params import FlcoreParams, FlcoreDataset
+
 
 class myTool( Tool ):
     """
