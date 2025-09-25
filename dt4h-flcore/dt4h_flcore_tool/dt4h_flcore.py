@@ -16,7 +16,7 @@ API_PREFIX = 'https://fl.bsc.es/dt4h-fem/API/v1'
 JOB_TIMEOUT = 60 * 5  # 5 minutes
 POLLING_INTERVAL = 2  # seconds
 REQUEST_TIMEOUT = 700  # seconds
-FINISH_WAIT = 10  # seconds
+FINISH_WAIT = 22  # seconds
 
 def dt4h_flcore(
         server_node: str = 'BSC',
@@ -24,7 +24,9 @@ def dt4h_flcore(
         input_params_path: str = None,
         tool_name: str = 'fLcore',
         health_check_path: str = None,
-        input_dataset_path: str = None
+        input_dataset_path: str = None,
+        job_timeout: int = JOB_TIMEOUT,
+        finish_wait: int = FINISH_WAIT
     ) -> dict:
     """ Run the DT4H demonstrator tool on the specified nodes."""
     if not tool_name:
@@ -109,8 +111,6 @@ def dt4h_flcore(
 
     logging.info(f"Running tool {tool_name} on nodes")
 
-    print(params_data)
-
     try:
         api_client.submit_tool(
             {
@@ -118,7 +118,7 @@ def dt4h_flcore(
                 'input_params': params_data,
                 'wait_for_job': True,
                 'polling': POLLING_INTERVAL,
-                'timeout': JOB_TIMEOUT
+                'timeout': job_timeout
             }
         )
     except Exception as e:
@@ -127,8 +127,8 @@ def dt4h_flcore(
         return {'status': 'failure', 'message': msg}
 
     # Allowing time for the results to settle
-    logging.info(f"Allowing time for results to settle ({FINISH_WAIT}s)")
-    time.sleep(FINISH_WAIT)
+    logging.info(f"Allowing time for results to settle ({finish_wait}s)")
+    time.sleep(finish_wait)
 
     #Files at sites
     try:
@@ -138,7 +138,7 @@ def dt4h_flcore(
         logging.error(f"Failed to get execution files: {e}")
         return {'status': 'failure', 'message': f"Failed to get execution files: {e}"}
 
-    #Download files
+    # Download files
     for node in all_nodes:
         if node not in files or 'files' not in files[node]:
             logging.warning(f"No files found for node {node}")
@@ -173,6 +173,10 @@ if __name__ == '__main__':
     argparser.add_argument('--input_params_path', type=str, help='Path to Application parameters (JSON|YML)')
     argparser.add_argument('--input_dataset_path', type=str, help='Path to Input dataset reference (JSON)')
     argparser.add_argument('--health_check', action='store', help='Perform heartbeat before executing and store at file')
+    argparser.add_argument('--job_timeout', action='store', help='Job timeout duration (seconds)', type=int, default=JOB_TIMEOUT)
+    argparser.add_argument('--finish_wait', action='store', help='Finish wait duration (seconds)', type=int, default=FINISH_WAIT)
+    
+
     args = argparser.parse_args()
 
 
@@ -182,7 +186,9 @@ if __name__ == '__main__':
         tool_name=args.tool_name,
         input_params_path=args.input_params_path,
         health_check_path=args.health_check,
-        input_dataset_path=args.input_dataset_path
+        input_dataset_path=args.input_dataset_path,
+        job_timeout=args.job_timeout,
+        finish_wait=args.finish_wait  
     )
 
     print(json.dumps(execution_results, indent=4))
