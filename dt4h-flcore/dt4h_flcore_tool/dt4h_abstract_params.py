@@ -14,17 +14,27 @@ class DT4HDataset:
                 logging.error(f"Failed to load dataset from {input_dataset_path}: {e}")
                 raise ValueError(f"Failed to load dataset file: {e}")
 
-    def get_dataset_id(self):
+    def get_dataset_ids(self):
         '''Get the dataset ID from the loaded dataset.'''
-        return self.dataset.get('dataset_id', None)
+        if isinstance(self.dataset.get('dataset_ids'), list):
+            return self.dataset.get('dataset_ids')
+        return [self.dataset.get('dataset_ids')]
 
 
 class DT4HToolParams:
     ''' Abstract class to represent the DT4H parameters for model training'''
-    def __init__(self, input_params_path: str = None, num_clients:int = 1, dataset_id: str = None):
+    def __init__(
+            self,
+            input_params_path: str = None,
+            num_clients:int = 1,
+            dataset_ids: list = None,
+            infer_clients: bool = False
+        ):
+        self.input_params = {}
         self.final_params = {}
+
         if input_params_path is None:
-            self.input_params = {'num_clients': num_clients, 'dataset_id': dataset_id}
+            self.input_params = {'num_clients': num_clients, 'dataset_ids': dataset_ids}
         else:
             try:
                 with open(input_params_path, 'r', encoding='utf-8') as params_file:
@@ -38,7 +48,14 @@ class DT4HToolParams:
                 logging.error(f"Failed to load input parameters from {input_params_path}: {e}")
                 raise ValueError(f"Failed to load input parameters file: {e}")
 
-    def prepare_parameters(self):
+        if infer_clients and not self.input_params.get('num_clients'):
+            clients = set()
+            for dataset_id in self.input_params.get('dataset_ids', []):
+                if ':' in dataset_id:
+                    clients.add(dataset_id.split(':')[0])
+            self.input_params['num_clients'] = len(clients)
+
+    def process_parameters(self):
         '''Prepare the parameters for the DT4H tool (to be overwritten).'''
         self.final_params = self.input_params
 
