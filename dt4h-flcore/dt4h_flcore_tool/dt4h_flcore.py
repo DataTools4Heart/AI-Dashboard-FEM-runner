@@ -58,7 +58,8 @@ def dt4h_flcore(
     if not health_check_path:
         logging.info("Health check is disabled, proceeding without it")
         api_client.server_node = server_node
-        api_client.client_nodes = client_node_list
+        if client_node_list and isinstance(client_node_list, str):
+            api_client.client_nodes = client_node_list.split(',')   
     else:
         api_client.server_node = None
         logging.info("Checking server health")
@@ -107,7 +108,7 @@ def dt4h_flcore(
     )
     params_data = flcore_params.get_params_json()
 
-    logging.debug(f"FEM params = {params_data}")
+    logging.info(f"FEM params = {params_data}")
 
     logging.info(f"Running tool {tool_name} on nodes")
 
