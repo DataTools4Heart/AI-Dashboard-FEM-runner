@@ -35,9 +35,6 @@ def dt4h_flcore(
     if not server_node:
         return {'status': 'failure', 'message': 'Server node must be provided'}
 
-    if not client_node_list:
-        return {'status': 'failure', 'message': 'Client node list must be provided'}
-
     logging.info(f"Starting DT4H {tool_name} demonstrator")
     logging.info(f"Using FEM API: {API_PREFIX}")
 
@@ -53,6 +50,15 @@ def dt4h_flcore(
     if api_client.token  is None:
         logging.error("Failed to obtain access token")
         return {'status': 'failure', 'message': 'Failed to obtain access token'}
+
+# Input datasets and automatic client node selection
+    flcore_dataset = FlcoreDataset(input_dataset_path=input_dataset_path)
+
+    if not client_node_list:
+        client_node_list = flcore_dataset.get_clients()
+        logging.info(f"Client nodes taken from data manifest. ({', '.join(client_node_list)})")
+        if not client_node_list or len(client_node_list) == 0:
+            return {'status': 'failure', 'message': 'No client nodes found in data manifest.'}
 
     # Health check. Node selection
     if not health_check_path:
@@ -98,8 +104,7 @@ def dt4h_flcore(
 
     all_nodes = set([api_client.server_node] + api_client.client_nodes)
 
-    # Input params
-    flcore_dataset = FlcoreDataset(input_dataset_path=input_dataset_path)
+    
     # Tool Submission
     flcore_params = FlcoreParams(
         input_params_path=input_params_path,
@@ -169,7 +174,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--server_node', type=str, help='Server node', default='BSC')
-    argparser.add_argument('--client_node_list', type=str, help='Client nodes, comma sep', default='BSC')
+    argparser.add_argument('--client_node_list', type=str, help='Client nodes, comma sep')
     argparser.add_argument('--tool_name', type=str, default='flcore')
     argparser.add_argument('--input_params_path', type=str, help='Path to Application parameters (JSON|YML)')
     argparser.add_argument('--input_dataset_path', type=str, help='Path to Input dataset reference (JSON)')

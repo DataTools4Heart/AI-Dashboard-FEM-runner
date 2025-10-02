@@ -44,6 +44,18 @@ class FlcoreDataset:
             return [dts.get('dataset_id', None) for dts in self.dataset if 'dataset_id' in dts]
         return self.dataset.get('dataset_id', None)
 
+    def get_clients(self):
+        if isinstance(self.dataset, list):
+            nodes = set()
+            for dts in self.dataset:
+                if 'dataset_id' in dts and ':' in dts['dataset_id']:
+                    node, _ = dts['dataset_id'].split(':', 1)
+                    nodes.add(node)
+            return list(nodes)
+        if 'dataset_id' in self.dataset and ':' in self.dataset['dataset_id']:
+            node, _ = self.dataset['dataset_id'].split(':', 1)
+            return [node]
+        return []
 
 class FlcoreParams:
     ''' Class to represent the FLCore parameters for model training'''
