@@ -1,8 +1,8 @@
-Server:
+server:
   num_rounds: 5
   model: random_forest
 
-Client:
+client:
   model: random_forest
   train_labels:
     - encounters_encounterClass
