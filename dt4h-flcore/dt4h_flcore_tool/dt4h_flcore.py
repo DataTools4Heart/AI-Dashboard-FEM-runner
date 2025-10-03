@@ -10,7 +10,8 @@ import json
 import argparse
 import yaml
 from fem_api_client import FEMAPIClient
-from flcore_params import FlcoreParams, FlcoreDataset
+from flcore_params import FlcoreParams, FlcoreDataset, FlcoreOpalVariables
+
 
 API_PREFIX = 'https://fl.bsc.es/dt4h-fem/API/v1'
 JOB_TIMEOUT = 60 * 5  # 5 minutes
@@ -25,6 +26,8 @@ def dt4h_flcore(
         tool_name: str = 'fLcore',
         health_check_path: str = None,
         input_dataset_path: str = None,
+        input_variables_path: str = None,
+        target_label: str = None,
         job_timeout: int = JOB_TIMEOUT,
         finish_wait: int = FINISH_WAIT
     ) -> dict:
@@ -66,6 +69,8 @@ def dt4h_flcore(
         api_client.server_node = server_node
         if client_node_list and isinstance(client_node_list, str):
             api_client.client_nodes = client_node_list.split(',')   
+        else:
+            api_client.client_nodes = client_node_list
     else:
         api_client.server_node = None
         logging.info("Checking server health")
@@ -103,13 +108,24 @@ def dt4h_flcore(
         logging.info(f"Active client nodes: {api_client.client_nodes}")
 
     all_nodes = set([api_client.server_node] + api_client.client_nodes)
+    # Get variables from Opal if provided
+    if input_variables_path:
+        opal_vars = FlcoreOpalVariables(input_variables_path=input_variables_path)
+        if not opal_vars.variables or len(opal_vars.variables) == 0:
+            return {'status': 'failure', 'message': 'No variables found in Opal variables file.'}
+        logging.info(f"Variables taken from Opal variables file. ({', '.join(opal_vars.get_variable_names())})")
+        if not target_label:
+            logging.info(f"Target label not provided. Using {target_label} as target label.")
 
-    
+    else:
+        opal_vars = None
+        logging.info("No Opal variables file provided.")
     # Tool Submission
     flcore_params = FlcoreParams(
         input_params_path=input_params_path,
         num_clients=len(api_client.client_nodes),
-        dataset_id=flcore_dataset.get_dataset_id()
+        dataset_id=flcore_dataset.get_dataset_id(),
+        opal_vars=opal_vars
     )
     params_data = flcore_params.get_params_json()
 
@@ -178,6 +194,8 @@ if __name__ == '__main__':
     argparser.add_argument('--tool_name', type=str, default='flcore')
     argparser.add_argument('--input_params_path', type=str, help='Path to Application parameters (JSON|YML)')
     argparser.add_argument('--input_dataset_path', type=str, help='Path to Input dataset reference (JSON)')
+    argparser.add_argument('--input_variables_path', type=str, help='Path to Input variables from Mica search (zip)')
+    argparser.add_argument('--target_label', type=str, help='Target label for the model (used with Mica variables)')
     argparser.add_argument('--health_check', action='store', help='Perform heartbeat before executing and store at file')
     argparser.add_argument('--job_timeout', action='store', help='Job timeout duration (seconds)', type=int, default=JOB_TIMEOUT)
     argparser.add_argument('--finish_wait', action='store', help='Finish wait duration (seconds)', type=int, default=FINISH_WAIT)
@@ -193,6 +211,8 @@ if __name__ == '__main__':
         input_params_path=args.input_params_path,
         health_check_path=args.health_check,
         input_dataset_path=args.input_dataset_path,
+        input_variables_path=args.input_variables_path,
+        target_label=args.target_label,
         job_timeout=args.job_timeout,
         finish_wait=args.finish_wait  
     )

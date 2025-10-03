@@ -57,9 +57,45 @@ class FlcoreDataset:
             return [node]
         return []
 
+class FlcoreOpalVariables:
+    ''' Class to represent the FLCore variables as obtained from Mica search'''
+    def __init__(self, input_variables_path: str = None):
+        self.variables = {}
+        if input_variables_path is None:
+            return
+        try:
+            if input_variables_path.endswith('.zip'):
+                import zipfile
+                with zipfile.ZipFile(input_variables_path, 'r') as zip_ref:
+                    json_files = [f for f in zip_ref.namelist() if f.endswith('.json')]
+                    if not json_files:
+                        raise ValueError("No JSON file found in the ZIP archive.")
+                    with zip_ref.open(json_files[0]) as json_file:
+                        opal_data = json.load(json_file)
+                    self.variables = [var['name'] for var in opal_data["Magma.VariableListViewDto.view"]['variables']]
+            else:
+                raise ValueError('Unsupported file format. Use ZIP')
+        except (json.JSONDecodeError, zipfile.BadZipFile) as e:
+            logging.error(f"Failed to load variables from {input_variables_path}: {e}")
+            raise ValueError(f"Failed to load variables file: {e}")
+        except FileNotFoundError as e:
+            logging.error(f"Variables file not found: {e}")
+            raise ValueError(f"Variables file not found: {e}")
+
+    def get_variable_names(self):
+        return list(self.variables)
+    
 class FlcoreParams:
     ''' Class to represent the FLCore parameters for model training'''
-    def __init__(self, input_params_path: str = None, num_clients:int = 1, dataset_id: str = None):
+    def __init__(
+            self, 
+            input_params_path: str = None, 
+            num_clients:int = 1, 
+            dataset_id: str = None, 
+            opal_vars=None, 
+            target_label: str = None 
+        ):
+        ''' Initialize the FLCore parameters.'''
         self.input_params = {
             'server': DEFAULT_SERVER_PARAMS,
             'model': 'random_forest',
@@ -72,9 +108,9 @@ class FlcoreParams:
             try:
                 with open(input_params_path, 'r', encoding='utf-8') as params_file:
                     if input_params_path.endswith('.json'):
-                        input_params = json.load(params_file)
+                        self.input_params = json.load(params_file)
                     elif input_params_path.endswith('.yml') or input_params_path.endswith('.yaml'):
-                        input_params = yaml.safe_load(params_file)
+                        self.input_params = yaml.safe_load(params_file)
                     else:
                         raise ValueError('Unsupported file format. Use JSON or YAML.')
             except (json.JSONDecodeError, yaml.YAMLError) as e:
@@ -83,15 +119,16 @@ class FlcoreParams:
             except FileNotFoundError as e:
                 logging.error(f"Input parameters file not found: {e}")
                 raise ValueError(f"Input parameters file not found: {e}")
-            
-            if 'server' in input_params:            
-                if 'num_clients' not in input_params['server']:
+
+            if 'server' in self.input_params:
+                if 'num_clients' not in self.input_params['server']:
                     self.input_params['server']['num_clients'] = num_clients
-                for key in input_params['server']:
-                    self.input_params['server'][key] = input_params['server'][key]
-                
-            for key in input_params['client']:
-                self.input_params[key] = input_params['client'][key]
+                for key in self.input_params['server']:
+                    self.input_params['server'][key] = self.input_params['server'][key]
+
+            for key in self.input_params['client']:
+                self.input_params[key] = self.input_params['client'][key]
+            del self.input_params['client']
 
             if isinstance(dataset_id, str) and dataset_id != '':
                 if ':' not in dataset_id:
@@ -110,6 +147,9 @@ class FlcoreParams:
                     if node not in self.input_params:
                         self.input_params[node] = {}
                     self.input_params[node]['data_id'] = dts_id
+            if opal_vars is not None and len(opal_vars.variables) > 0:
+                self.input_params['train_labels'] = ' '.join(opal_vars.variables)
+            self.input_params['target_label'] = target_label if target_label else DEFAULT_TARGET_LABEL
 
     def get_params_json(self):
         '''Get the FLCore parameters as a JSON string.'''
