@@ -8,9 +8,10 @@ import time
 import logging
 import json
 import argparse
-import yaml
 from fem_api_client import FEMAPIClient
 from flcore_params import FlcoreParams, FlcoreDataset, FlcoreOpalVariables
+from generate_flcore_report import FLCoreLogParser, HTMLReportGenerator
+
 
 
 API_PREFIX = 'https://fl.bsc.es/dt4h-fem/API/v1'
@@ -179,6 +180,18 @@ def dt4h_flcore(
             except Exception as e:
                 logging.error(f"Failed to download file {file} from node {node}: {e}")
 
+    # Generate report if log file found
+    Flwr_log_file = api_client.server_node + '_log_server.txt'
+    if os.path.exists(f"{output_path}/{Flwr_log_file}"):    
+        logging.info(f"Generating FLCore report from log file {Flwr_log_file}")
+        parser = FLCoreLogParser(f"{output_path}/{Flwr_log_file}")
+        data = parser.parse_logs()
+        report_file = f"{output_path}/flcore_report.html"
+        generator = HTMLReportGenerator(data)
+        generator.generate_html(report_file)
+        logging.info(f"FLCore report generated: {report_file}")
+
+    
     return {
         'status': 'success',
         'message': f"Tool \"{tool_name}\" run on server {api_client.server_node} and clients {api_client.client_nodes}.",
