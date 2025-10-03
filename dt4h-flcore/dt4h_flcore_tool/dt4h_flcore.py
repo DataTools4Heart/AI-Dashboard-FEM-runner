@@ -27,6 +27,7 @@ def dt4h_flcore(
         health_check_path: str = None,
         input_dataset_path: str = None,
         input_variables_path: str = None,
+        output_path: str = None,
         target_label: str = None,
         job_timeout: int = JOB_TIMEOUT,
         finish_wait: int = FINISH_WAIT
@@ -161,6 +162,7 @@ def dt4h_flcore(
         return {'status': 'failure', 'message': f"Failed to get execution files: {e}"}
 
     # Download files
+    
     for node in all_nodes:
         if node not in files or 'files' not in files[node]:
             logging.warning(f"No files found for node {node}")
@@ -169,7 +171,7 @@ def dt4h_flcore(
             try:
                 file_content = api_client.download_file(node=node, file_name=file)
                 if (file_content):
-                    with open(f"{node}_{file}", 'wb') as f:
+                    with open(f"{output_path}/{node}_{file}", 'wb') as f:
                         f.write(file_content)
                         logging.info(f"Downloaded file {file} from node {node}")
                 else:
@@ -199,7 +201,8 @@ if __name__ == '__main__':
     argparser.add_argument('--health_check', action='store', help='Perform heartbeat before executing and store at file')
     argparser.add_argument('--job_timeout', action='store', help='Job timeout duration (seconds)', type=int, default=JOB_TIMEOUT)
     argparser.add_argument('--finish_wait', action='store', help='Finish wait duration (seconds)', type=int, default=FINISH_WAIT)
-    
+    argparser.add_argument('--output_path', action='store', help='Output directory path', type=str, default='./')
+        
 
     args = argparser.parse_args()
 
@@ -214,7 +217,8 @@ if __name__ == '__main__':
         input_variables_path=args.input_variables_path,
         target_label=args.target_label,
         job_timeout=args.job_timeout,
-        finish_wait=args.finish_wait  
+        finish_wait=args.finish_wait,
+        output_path=args.output_path
     )
 
     print(json.dumps(execution_results, indent=4))
