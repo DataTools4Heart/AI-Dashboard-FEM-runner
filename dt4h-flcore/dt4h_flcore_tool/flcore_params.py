@@ -3,7 +3,9 @@
 import logging
 import json
 import sys
+import zipfile
 import yaml
+
 
 DEFAULT_TRAIN_LABELS =  [
     'encounters_encounterClass',
@@ -65,16 +67,18 @@ class FlcoreOpalVariables:
             return
         try:
             if input_variables_path.endswith('.zip'):
-                import zipfile
                 with zipfile.ZipFile(input_variables_path, 'r') as zip_ref:
                     json_files = [f for f in zip_ref.namelist() if f.endswith('.json')]
                     if not json_files:
                         raise ValueError("No JSON file found in the ZIP archive.")
-                    with zip_ref.open(json_files[0]) as json_file:
+                    with zip_ref.open(json_files[0]) as json_file: # Open the first study found
                         opal_data = json.load(json_file)
-                    self.variables = [var['name'] for var in opal_data["Magma.VariableListViewDto.view"]['variables']]
+            elif input_variables_path.endswith('.json'):
+                with open(input_variables_path, 'r', encoding='utf-8') as json_file:
+                    opal_data = json.load(json_file)
             else:
                 raise ValueError('Unsupported file format. Use ZIP')
+            self.variables = [var['name'] for var in opal_data["Magma.VariableListViewDto.view"]['variables']]
         except (json.JSONDecodeError, zipfile.BadZipFile) as e:
             logging.error(f"Failed to load variables from {input_variables_path}: {e}")
             raise ValueError(f"Failed to load variables file: {e}")
@@ -83,16 +87,17 @@ class FlcoreOpalVariables:
             raise ValueError(f"Variables file not found: {e}")
 
     def get_variable_names(self):
+        ''' Get the names of the Opal variables.'''
         return list(self.variables)
-    
+
 class FlcoreParams:
     ''' Class to represent the FLCore parameters for model training'''
     def __init__(
             self, 
-            input_params_path: str = None, 
-            num_clients:int = 1, 
-            dataset_id: str = None, 
-            opal_vars=None, 
+            input_params_path: str = None,
+            num_clients:int = 1,
+            dataset_id: str = None,
+            opal_vars=None,
             target_label: str = None 
         ):
         ''' Initialize the FLCore parameters.'''
@@ -158,7 +163,3 @@ class FlcoreParams:
         except (TypeError, json.JSONDecodeError) as e:
             logging.error(f"Failed to serialize params to JSON: {e}")
             return {'status': 'failure', 'message': f"Failed to serialize input params: {e}"}
-
-
-
-
