@@ -5,9 +5,9 @@
 import sys
 import os
 import time
+from utils import logger
 import json
 import argparse
-from utils import logger
 from tool.fem_api_client import FEMAPIClient
 from tool.flcore_params import FlcoreParams, FlcoreDataset, FlcoreOpalVariables
 from tool.generate_flcore_report import FLCoreLogParser, HTMLReportGenerator
@@ -18,6 +18,7 @@ JOB_TIMEOUT = 60 * 5  # 5 minutes
 POLLING_INTERVAL = 2  # seconds
 REQUEST_TIMEOUT = 700  # seconds
 FINISH_WAIT = 22  # seconds
+FILES_TIMEOUT = 120  # seconds
 
 def dt4h_flcore(
         server_node: str = 'BSC',
@@ -30,7 +31,8 @@ def dt4h_flcore(
         output_path: str = None,
         target_label: str = None,
         job_timeout: int = JOB_TIMEOUT,
-        finish_wait: int = FINISH_WAIT
+        finish_wait: int = FINISH_WAIT,
+        files_timeout: int = FILES_TIMEOUT
     ) -> dict:
     """ Run the DT4H demonstrator tool on the specified nodes."""
     if not tool_name:
@@ -79,7 +81,6 @@ def dt4h_flcore(
         if 'state' in api_client.health_sites_data[server_node] and \
                 api_client.health_sites_data[server_node]['state'] == 'running':
             api_client.server_node = server_node
-        #logger.info(f"server: {api_client.health_sites_data[server_node]}")
         logger.info("server: {}",json.dumps(api_client.health_sites_data[server_node],indent=4))
         if isinstance(client_node_list, str):
             client_node_list = client_node_list.split(',')
@@ -91,7 +92,6 @@ def dt4h_flcore(
             if not api_client.health_sites_data.get(node):
                 logger.error(f"No client heartbeat data found for node {node}")
                 return {'status': 'failure', 'message': 'No client heartbeat data found.'}
-            #logger.info(f"client: {api_client.health_sites_data[node]}")
             logger.info("client: {}",json.dumps(api_client.health_sites_data[node],indent=4))
             if 'state' in api_client.health_sites_data[node] and \
                     api_client.health_sites_data[node]['state'] == 'running':
@@ -132,7 +132,6 @@ def dt4h_flcore(
     )
     params_data = flcore_params.get_params_json()
 
-    #logger.info(f"FEM params = {params_data}")
     logger.info("FEM params = {} ",json.dumps(params_data,indent=4))
 
     logger.info(f"Running tool {tool_name} on nodes")
@@ -157,12 +156,22 @@ def dt4h_flcore(
     time.sleep(finish_wait)
 
     #Files at sites
-    try:
-        files = api_client.get_execution_file_list()
-        logger.info(f"Files at sites: {files}")
-    except Exception as e:
-        logger.error(f"Failed to get execution files: {e}")
-        return {'status': 'failure', 'message': f"Failed to get execution files: {e}"}
+    files_loaded = False
+    files_timeout = FILES_TIMEOUT
+    while not files_loaded and files_timeout > 0:   
+        # Get files at sites
+        try:
+            files = api_client.get_execution_file_list()
+            logger.info(f"Files at sites: {files}")
+        except Exception as e:
+            logger.error(f"Failed to get execution files: {e}")
+            return {'status': 'failure', 'message': f"Failed to get execution files: {e}"}
+        files_loaded = 'user_id' not in files
+        if not files_loaded:
+            logger.warning(f"Files not loaded yet, waiting {POLLING_INTERVAL}s and retrying")
+        time.sleep(POLLING_INTERVAL)
+        files_timeout -= POLLING_INTERVAL
+
 
     # Download files
     
@@ -216,6 +225,7 @@ if __name__ == '__main__':
     argparser.add_argument('--health_check', action='store', help='Perform heartbeat before executing and store at file')
     argparser.add_argument('--job_timeout', action='store', help='Job timeout duration (seconds)', type=int, default=JOB_TIMEOUT)
     argparser.add_argument('--finish_wait', action='store', help='Finish wait duration (seconds)', type=int, default=FINISH_WAIT)
+    argparser.add_argument('--files_timeout', action='store', help='Files timeout duration (seconds)', type=int, default=FILES_TIMEOUT)
     argparser.add_argument('--output_path', action='store', help='Output directory path', type=str, default='./')
         
 
@@ -233,7 +243,8 @@ if __name__ == '__main__':
         target_label=args.target_label,
         job_timeout=args.job_timeout,
         finish_wait=args.finish_wait,
-        output_path=args.output_path
+        output_path=args.output_path,
+        files_timeout=args.files_timeout
     )
 
     print(json.dumps(execution_results, indent=4))

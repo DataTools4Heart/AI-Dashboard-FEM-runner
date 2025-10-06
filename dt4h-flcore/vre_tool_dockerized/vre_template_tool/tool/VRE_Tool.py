@@ -216,6 +216,7 @@ class myTool( Tool ):
             - do_health_check (boolean, if True, path='health_check.json')
             - job_timeout (default: 300)
             - finish_wait (default: 22)
+            - files_timeout (default: 120 )
          """
 
 
@@ -269,6 +270,7 @@ class myTool( Tool ):
             'target_label': target_label if has_variables else None,
             'job_timeout': int(self.configuration.get('job_timeout', 300)),
             'finish_wait': int(self.configuration.get('finish_wait', 22)),
+            'files_timeout': int(self.configuration.get('files_timeout', 120)),
         }
 
         # -- demo mode ---

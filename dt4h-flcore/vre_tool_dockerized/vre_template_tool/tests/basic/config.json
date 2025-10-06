@@ -47,6 +47,10 @@
             "value": "300"
         },
         {
+            "name": "files_timeout",
+            "value": "120"
+        },
+        {
             "name": "demo_mode",
             "value": "False"
         },

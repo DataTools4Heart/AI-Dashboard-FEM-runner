@@ -298,7 +298,6 @@ class FEMAPIClient:
         query = [f'nodes = {node}' for node in set([self.server_node] + self.client_nodes)]
         query.append(f'execution_id={self.execution.id}')
         query.append('path=/sandbox')
-        print(query)
         file_list = self._do_get_request(
             URL_FILES,
             headers=self._create_auth_header(),

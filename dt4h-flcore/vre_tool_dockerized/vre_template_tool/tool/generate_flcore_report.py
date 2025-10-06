@@ -10,6 +10,7 @@ import sys
 import os
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
+from utils import logger
 
 class FLCoreLogParser:
     """Parser for FLCore federated learning server logs"""
@@ -170,7 +171,7 @@ class HTMLReportGenerator:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        print(f"✅ Report generated successfully: {output_file}")
+        logger.info(f"✅ Report generated successfully: {output_file}")
     
     def _generate_html_structure(self) -> str:
         """Generate the complete HTML structure"""
