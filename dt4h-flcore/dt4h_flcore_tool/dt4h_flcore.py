@@ -244,7 +244,8 @@ if __name__ == '__main__':
         target_label=args.target_label,
         job_timeout=args.job_timeout,
         finish_wait=args.finish_wait,
-        output_path=args.output_path
+        output_path=args.output_path,
+        files_timeout=args.files_timeout
     )
 
     print(json.dumps(execution_results, indent=4))

@@ -4,6 +4,7 @@ FLCore Federated Learning Report Generator
 This script parses FLCore server logs and generates an interactive HTML report
 with charts, metrics, and detailed analysis.
 """
+import logging
 import re
 import json
 import sys
@@ -170,7 +171,7 @@ class HTMLReportGenerator:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        print(f"✅ Report generated successfully: {output_file}")
+        logging.info(f"✅ Report generated successfully: {output_file}")
     
     def _generate_html_structure(self) -> str:
         """Generate the complete HTML structure"""
