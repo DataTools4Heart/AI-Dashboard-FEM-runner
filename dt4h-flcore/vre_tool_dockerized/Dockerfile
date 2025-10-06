@@ -1,5 +1,12 @@
-#INTEGRATE YOUR TOOL'S CONTAINER
-FROM dt4h-flcore
+# INSTALL TOOL
+FROM ubuntu:22.04
+
+RUN mkdir /home/workdir
+#COPY dt4h_flcore.py /home
+#COPY flcore_params.py /home
+#COPY fem_api_client.py /home
+#COPY generate_flcore_report.py /home
+WORKDIR /home/workdir
 
 #---------- DO NOT EDIT BELOW HERE ------------------------------------------------------------# 
 #INSTALL openVRE DEPENDENCIES
@@ -17,12 +24,11 @@ WORKDIR /home/vre_template_tool
 
 RUN pip3 install --upgrade wheel
 RUN pip3 install -r requirements.txt
-COPY requirements_app.txt .
-RUN pip3 install -r requirements_app.txt
 RUN pip3 install --upgrade pip
 
 #Adding your test files
-COPY ./vre_template_tool/* /home/vre_template_tool/tool/
+COPY ./vre_template_tool/ /home/vre_template_tool/tool/
+RUN pip3 install -r requirements_app.txt
 RUN chmod -R 777 /home/vre_template_tool
 RUN  chmod -R a+rwx /home/vre_template_tool
 
