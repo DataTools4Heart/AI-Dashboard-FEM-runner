@@ -1,0 +1,97 @@
+Server:
+
+   "command": {
+     "base": "python3 server_cmd.py",
+     "args": [
+       {
+         "id": "n_features",
+         "type": "int",
+         "default_value": 9,
+         "position": 1,
+         "prefix": "--n_features",
+         "separate": true,
+         "required": true
+       },
+       {
+         "id": "num_rounds",
+         "type": "int",
+         "default_value": 5,
+         "position": 2,
+         "prefix": "--num_rounds",
+         "separate": true,
+         "required": true
+       },
+       {
+         "id": "model",
+         "type": "str",
+         "default_value": "random_forest",
+         "position": 3,
+         "prefix": "--model",
+         "separate": true,
+         "required": true
+       },
+       {
+         "id": "num_clients",
+         "type": "int",
+         "position": 4,
+         "prefix": "--num_clients",
+         "separate": true,
+         "required": true,
+         "default_value": 1
+       }
+     ]
+   }
+
+Client:
+
+   "command": {
+     "base": "python3 client_cmd.py",
+     "args": [
+       {
+         "id": "model",
+         "type": "str",
+         "default_value": "random_forest",
+         "position": 1,
+         "prefix": "--model",
+         "separate": true,
+         "required": true
+       },
+       {
+         "id": "data_id",
+         "type": "str",
+         "default_value": "3362-2045-1944.parquet",
+         "position": 2,
+         "prefix": "--data_file",
+         "separate": true,
+         "required": true
+       },
+       {
+         "id": "train_labels",
+         "type": "str",
+         "default_value": "encounters_encounterClass encounters_admissionYear vital_signs_systolicBp_value_last patient_demographics_gender patient_demographics_age vital_signs_weight_value_last vital_signs_height_value_first lab_results_crpNonHs_value_avg lab_results_tropIHs_value_min",
+         "position": 3,
+         "prefix": "--train_labels",
+         "separate": true,
+         "required": true
+       },
+       {
+         "id": "target_label",
+         "type": "str",
+         "default_value": "conditions_stroke_any",
+         "position": 4,
+         "prefix": "--target_label",
+         "separate": true,
+         "required": true
+       },
+       {
+         "id": "node_name",
+         "type": "str",
+         "position": 5,
+         "default_value": "%%node_name%%",
+         "prefix": "--node_name",
+         "separate": true,
+         "required": true
+       }
+     ]
+   }
+

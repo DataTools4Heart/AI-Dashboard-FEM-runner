@@ -1,38 +1,123 @@
 {
     "input_files": [
+        {
+            "name": "datasets",
+            "value": "unique_file_id_1",
+            "required": true,
+            "allow_multiple": false
+        },
+        {
+            "name": "flcore_config",
+            "value": "unique_file_id_2",
+            "required": true,
+            "allow_multiple": false
+        }
     ],
     "arguments": [
         {
             "name": "execution",
-            "value": "/shared_data/userdata/user_1/run000"
+            "value": "tests/basic/run000"
         },
         {
             "name": "project",
             "value": "example"
         },
         {
-            "name": "tool",
-            "value": "flcoore"
+            "name": "description",
+            "value": "test"
         },
         {
-            "name": "node_list",
+            "name": "server_node",
             "value": "BSC"
+        },
+        {
+            "name": "client_node_list",
+            "value": "VHIR,BSC"
+        },
+        {
+            "name": "tool_name",
+            "value": "flcore"
+        },
+        {
+            "name": "do_health_check",
+            "value": "True"
+        },
+        {
+            "name": "job_timeout",
+            "value": "300"
+        },
+        {
+            "name": "files_timeout",
+            "value": "120"
+        },
+        {
+            "name": "demo_mode",
+            "value": "False"
+        },
+        {
+            "name": "finish_wait",
+            "value": "50"
         }
+
     ],
     "output_files": [
         {
-            "name": "my_demo_outfile",
+            "name": "report",
+            "required": true,
+            "allow_multiple": false,
+            "file": {
+                "file_type": "HTML",
+                "data_type": "report",
+		"tool":"flcore",
+		"file_path": "flcore_report.html",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of tool application example"
+                }
+            }
+        },
+        {
+            "name": "server_log",
             "required": true,
             "allow_multiple": false,
             "file": {
                 "file_type": "TXT",
-                "data_type": "sample_information_file",
+                "data_type": "log",
+		"tool":"flcore",
                 "meta_data": {
                     "visible": true,
-                    "tool": "demo_tool",
-                    "description": "Demo TXT output file."
+                    "description": "Result of tool application example"
+                }
+            }
+        },
+        {
+            "name": "client_log",
+            "required": true,
+            "allow_multiple": true,
+            "file": {
+                "file_type": "TXT",
+                "data_type": "log",
+		"tool":"flcore",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of tool application example"
+                }
+            }
+        },
+        {
+            "name": "health_check",
+            "required": false,
+            "allow_multiple": false,
+            "file": {
+                "file_type": "JSON",
+                "data_type": "log",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of tool application example"
                 },
-                "file_path": "my_demo_outfile.txt"
+		"tool":"flcore",
+		"file_path": "health_check.json"
             }
         }
-    ]}
+    ]
+}

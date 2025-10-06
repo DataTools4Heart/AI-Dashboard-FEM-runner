@@ -2,7 +2,7 @@
     {
         "_id": "unique_file_id_1",
         "type": "file",
-        "file_path": "/home/ubuntu/AI-Dashboard-FEM-runner/dt4h-flcore/tests/flcore_test_single_dataset.json",
+        "file_path": "/home/vre_template_tool/tests/inputs/flcore_test_single_dataset.json",
         "file_type": "JSON",
         "data_type": "dataset_reference",
         "compressed": 0,
@@ -32,7 +32,7 @@
     {
         "_id": "unique_file_id_2",
         "type": "file",
-        "file_path": "/home/ubuntu/AI-Dashboard-FEM-runner/dt4h-flcore/tests/flcore_femclient.yaml",
+        "file_path": "/home/vre_template_tool/tests/inputs/flcore_femclient.yaml",
         "file_type": "YAML",
         "data_type": "FLCore_parameters",
         "compressed": 0,

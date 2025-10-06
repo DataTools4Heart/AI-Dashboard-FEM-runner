@@ -1,1 +1,28 @@
-# Start time: Sun Jun 16 23:27:37 CEST 2024
+2025-10-06 23:08:06 | INFO: 0) Unpack information from JSON
+2025-10-06 23:08:06 | INFO: 1) Instantiate and Configure Tool
+2025-10-06 23:08:06 | INFO: 2) Run Tool
+
+-- Input data:
+{'datasets': '/home/vre_template_tool/tests/inputs/flcore_test_single_dataset.json', 'flcore_config': '/home/vre_template_tool/tests/inputs/flcore_femclient.yaml'}
+
+-- Arguments:
+{'execution': 'tests/basic/run000', 'project': 'example', 'description': 'test', 'server_node': 'BSC', 'client_node_list': 'VHIR,BSC', 'tool_name': 'flcore', 'do_health_check': True, 'job_timeout': '300', 'files_timeout': '120', 'demo_mode': False, 'finish_wait': '50'}
+
+-- CWD:
+/home/vre_template_tool/tests/basic/run000
+
+-- Expected output path:
+/home/vre_template_tool/tests/basic/run000
+2025-10-06 23:08:06 | INFO: Starting DT4H flcore demonstrator
+2025-10-06 23:08:06 | INFO: Using FEM API: https://fl.bsc.es/dt4h-fem/API/v1
+2025-10-06 23:08:07 | ERROR: POST request failed: 400 Client Error: Bad Request for url: https://fl.bsc.es/dt4h-fem/API/v1/token
+2025-10-06 23:08:07 | ERROR: Failed to obtain access token
+2025-10-06 23:08:07 | INFO: Looking for the expected output files in the working directory...
+2025-10-06 23:08:07 | ERROR:  - Output report: missing required file with filename flcore_report.html
+2025-10-06 23:08:07 | ERROR:  - Output server_log: missing required output. No *.txt files found
+2025-10-06 23:08:07 | ERROR:  - Output client_log: missing required output. No *.txt files found
+2025-10-06 23:08:07 | WARNING:  - Output health_check: missing optional file with filename health_check.json
+2025-10-06 23:08:07 | INFO: Validated outputs = {}
+2025-10-06 23:08:07 | INFO: 3) Create information
+2025-10-06 23:08:07 | INFO: 4) Pack information to JSON
+2025-10-06 23:08:07 | PROGRESS: <myTool> tool successfully executed; see /shared_data/userdata/user_1/run001/out_metadata.json

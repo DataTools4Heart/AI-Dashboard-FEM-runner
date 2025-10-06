@@ -26,9 +26,10 @@ RUN pip3 install --upgrade wheel
 RUN pip3 install -r requirements.txt
 RUN pip3 install --upgrade pip
 
-#Adding your test files
-COPY ./vre_template_tool/ /home/vre_template_tool/tool/
-RUN pip3 install -r requirements_app.txt
+#Overwrite cloned template with tool specific libs
+COPY ./vre_template_tool/tool/ /home/vre_template_tool/tool/
+COPY ./vre_template_tool/tests/ /home/vre_template_tool/tests/
+RUN pip3 install -r tool/requirements_app.txt
 RUN chmod -R 777 /home/vre_template_tool
 RUN  chmod -R a+rwx /home/vre_template_tool
 
