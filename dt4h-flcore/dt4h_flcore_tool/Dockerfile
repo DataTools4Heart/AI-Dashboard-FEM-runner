@@ -6,5 +6,6 @@ WORKDIR /home
 COPY dt4h_flcore.py /home
 COPY flcore_params.py /home
 COPY fem_api_client.py /home
+COPY generate_flcore_report.py /home
 WORKDIR /home/workdir
 ENTRYPOINT ["/usr/bin/python3", "/home/dt4h_flcore.py"]
