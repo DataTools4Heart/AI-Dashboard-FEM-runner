@@ -19,6 +19,7 @@ JOB_TIMEOUT = 60 * 5  # 5 minutes
 POLLING_INTERVAL = 2  # seconds
 REQUEST_TIMEOUT = 700  # seconds
 FINISH_WAIT = 22  # seconds
+FILES_TIMEOUT = 120  # seconds
 
 def dt4h_flcore(
         server_node: str = 'BSC',
@@ -31,7 +32,8 @@ def dt4h_flcore(
         output_path: str = None,
         target_label: str = None,
         job_timeout: int = JOB_TIMEOUT,
-        finish_wait: int = FINISH_WAIT
+        finish_wait: int = FINISH_WAIT,
+        files_timeout: int = FILES_TIMEOUT
     ) -> dict:
     """ Run the DT4H demonstrator tool on the specified nodes."""
     if not tool_name:
@@ -156,8 +158,9 @@ def dt4h_flcore(
 
     #Files at sites
     files_loaded = False
-    while not files_loaded:
-         # Get files at sites
+    files_timeout = FILES_TIMEOUT
+    while not files_loaded and files_timeout > 0:   
+        # Get files at sites
         try:
             files = api_client.get_execution_file_list()
             logging.info(f"Files at sites: {files}")
@@ -168,6 +171,8 @@ def dt4h_flcore(
         if not files_loaded:
             logging.warning(f"Files not loaded yet, waiting {POLLING_INTERVAL}s and retrying")
         time.sleep(POLLING_INTERVAL)
+        files_timeout -= POLLING_INTERVAL
+
 
     # Download files
     
@@ -221,6 +226,7 @@ if __name__ == '__main__':
     argparser.add_argument('--health_check', action='store', help='Perform heartbeat before executing and store at file')
     argparser.add_argument('--job_timeout', action='store', help='Job timeout duration (seconds)', type=int, default=JOB_TIMEOUT)
     argparser.add_argument('--finish_wait', action='store', help='Finish wait duration (seconds)', type=int, default=FINISH_WAIT)
+    argparser.add_argument('--files_timeout', action='store', help='Files timeout duration (seconds)', type=int, default=FILES_TIMEOUT)
     argparser.add_argument('--output_path', action='store', help='Output directory path', type=str, default='./')
         
 
