@@ -16,7 +16,7 @@
     "arguments": [
         {
             "name": "execution",
-            "value": "tests/basic/run000"
+            "value": "/shared_data/userdata/user_1/run001"
         },
         {
             "name": "project",
@@ -52,7 +52,7 @@
         },
         {
             "name": "demo_mode",
-            "value": "False"
+            "value": "True"
         },
         {
             "name": "finish_wait",
