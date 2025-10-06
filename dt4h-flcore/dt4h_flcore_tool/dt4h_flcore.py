@@ -155,12 +155,19 @@ def dt4h_flcore(
     time.sleep(finish_wait)
 
     #Files at sites
-    try:
-        files = api_client.get_execution_file_list()
-        logging.info(f"Files at sites: {files}")
-    except Exception as e:
-        logging.error(f"Failed to get execution files: {e}")
-        return {'status': 'failure', 'message': f"Failed to get execution files: {e}"}
+    files_loaded = False
+    while not files_loaded:
+         # Get files at sites
+        try:
+            files = api_client.get_execution_file_list()
+            logging.info(f"Files at sites: {files}")
+        except Exception as e:
+            logging.error(f"Failed to get execution files: {e}")
+            return {'status': 'failure', 'message': f"Failed to get execution files: {e}"}
+        files_loaded = 'user_id' not in files
+        if not files_loaded:
+            logging.warning(f"Files not loaded yet, waiting {POLLING_INTERVAL}s and retrying")
+        time.sleep(POLLING_INTERVAL)
 
     # Download files
     
