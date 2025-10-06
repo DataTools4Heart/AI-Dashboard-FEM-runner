@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLCore Federated Learning - Training Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --dt4h-primary: #ae0d1b;
+            --dt4h-secondary: #8b0a15;
+            --dt4h-accent: #d42434;
+            --dt4h-success: #28a745;
+            --dt4h-warning: #ffc107;
+            --dt4h-danger: #dc3545;
+            --dt4h-light: #f8f9fa;
+            --dt4h-dark: #212529;
+            --dt4h-gray-100: #f1f3f4;
+            --dt4h-gray-200: #e9ecef;
+            --dt4h-gray-300: #dee2e6;
+            --dt4h-gray-600: #6c757d;
+            --dt4h-gray-700: #495057;
+            --dt4h-gray-800: #343a40;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            color: var(--dt4h-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(rgba(174, 13, 27, 0.8), rgba(139, 10, 21, 0.8)), url('https://www.datatools4heart.eu/wp-content/uploads/2023/03/Bg-1.png');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 32px rgba(174, 13, 27, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            z-index: 0;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 3em;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            margin: 15px 0 0 0;
+            opacity: 0.95;
+            font-size: 1.2em;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .summary-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(174, 13, 27, 0.1);
+            text-align: center;
+            border-left: 5px solid var(--dt4h-primary);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--dt4h-primary), var(--dt4h-accent));
+        }
+        
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(174, 13, 27, 0.2);
+        }
+        
+        .summary-card h3 {
+            margin: 0 0 15px 0;
+            color: var(--dt4h-gray-700);
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 600;
+        }
+        
+        .summary-card .value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--dt4h-primary);
+            margin-bottom: 5px;
+        }
+        
+        .section {
+            background: white;
+            margin: 40px 0;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(174, 13, 27, 0.08);
+            border: 1px solid var(--dt4h-gray-200);
+        }
+        
+        .section h2 {
+            color: var(--dt4h-primary);
+            border-bottom: 3px solid var(--dt4h-gray-200);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--dt4h-primary), var(--dt4h-accent));
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 35px;
+            margin: 35px 0;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(174, 13, 27, 0.08);
+            border: 1px solid var(--dt4h-gray-200);
+            transition: all 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            box-shadow: 0 12px 35px rgba(174, 13, 27, 0.15);
+        }
+        
+        .chart-container h3 {
+            color: var(--dt4h-primary);
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.2em;
+        }
+        
+        .client-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .client-card {
+            background: var(--dt4h-light);
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid var(--dt4h-gray-200);
+            transition: all 0.3s ease;
+        }
+        
+        .client-card:hover {
+            border-color: var(--dt4h-accent);
+            background: white;
+        }
+        
+        .client-card h4 {
+            color: var(--dt4h-primary);
+            margin: 0 0 15px 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .metric-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 0.95em;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(174, 13, 27, 0.1);
+        }
+        
+        .metric-table th, .metric-table td {
+            padding: 15px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--dt4h-gray-200);
+        }
+        
+        .metric-table th {
+            background: linear-gradient(135deg, var(--dt4h-primary), var(--dt4h-secondary));
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-table tr:hover {
+            background-color: rgba(174, 13, 27, 0.05);
+        }
+        
+        .metric-table tr:nth-child(even) {
+            background-color: rgba(0, 180, 216, 0.02);
+        }
+        
+        .log-section {
+            max-height: 450px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, var(--dt4h-gray-800) 0%, #2c3e50 100%);
+            color: #ecf0f1;
+            padding: 25px;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.5;
+            border: 2px solid var(--dt4h-gray-300);
+        }
+        
+        .log-entry {
+            margin: 3px 0;
+            padding: 3px 0;
+            border-left: 3px solid transparent;
+            padding-left: 8px;
+        }
+        
+        .log-debug { 
+            color: #74c0fc; 
+            border-left-color: #74c0fc;
+        }
+        .log-info { 
+            color: #51cf66; 
+            border-left-color: #51cf66;
+        }
+        .log-warning { 
+            color: #ffd43b; 
+            border-left-color: #ffd43b;
+        }
+        .log-error { 
+            color: #ff6b6b; 
+            border-left-color: #ff6b6b;
+        }
+        
+        .timestamp {
+            color: #adb5bd;
+            font-weight: 600;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background: var(--dt4h-primary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+            margin: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-success {
+            background: linear-gradient(135deg, var(--dt4h-success) 0%, #20c997 100%);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: var(--dt4h-gray-200);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--dt4h-primary) 0%, var(--dt4h-accent) 100%);
+            width: 100%;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* EU Banner styles matching dt4h.css */
+        .bannerEU {
+            background-color: var(--dt4h-primary);
+            color: #fff;
+            margin-top: 50px;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.2em; }
+            .header .subtitle { font-size: 1.1em; }
+            .section { padding: 25px 20px; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: 1fr; }
+            
+            /* Footer responsive styling */
+            .bannerEU .container > div {
+                flex-direction: column !important;
+                text-align: center !important;
+            }
+            .bannerEU .container > div > div {
+                text-align: center !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="header">
+            <h1><img src="https://fl.datatools4heart.bsc.es/assets/layouts/layout/img/logo.png" alt="DataTools4Heart Logo" style="height: 50px;"> FLCore Federated Learning Report</h1>
+            <div class="subtitle">Training Session - October 05, 2025 | FLCore Analytics Dashboard</div>
+        </div>
+        
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h3>Total Rounds</h3>
+                <div class="value">5</div>
+            </div>
+            <div class="summary-card">
+                <h3>Active Clients</h3>
+                <div class="value">2</div>
+            </div>
+            <div class="summary-card">
+                <h3>Training Duration</h3>
+                <div class="value">3.88s</div>
+            </div>
+            <div class="summary-card">
+                <h3>Final Loss</h3>
+                <div class="value">0.0000</div>
+            </div>
+            <div class="summary-card">
+                <h3>Final Accuracy</h3>
+                <div class="value">52.95%</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Training Progress</h2>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <p><span class="badge status-success">COMPLETED</span> Federated learning completed successfully</p>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>Loss Over Rounds</h3>
+                <canvas id="lossChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Accuracy Over Rounds</h3>
+                <canvas id="accuracyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Training Time per Round</h3>
+                <canvas id="timeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Performance Metrics (Final Round)</h3>
+                <canvas id="metricsChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🏥 Client Information</h2>
+            <div class="client-info">
+                
+                <div class="client-card">
+                    <h4>Client 1: 172.17.0.1:40664</h4>
+                    <p><strong>Type:</strong> Docker Network Client</p>
+                    <p><strong>Samples per Round:</strong> 660</p>
+                    <p><strong>Status:</strong> <span class="badge status-success">Active</span></p>
+                </div>
+                <div class="client-card">
+                    <h4>Client 2: 84.88.74.9:63152</h4>
+                    <p><strong>Type:</strong> External Network Client</p>
+                    <p><strong>Samples per Round:</strong> 660</p>
+                    <p><strong>Status:</strong> <span class="badge status-success">Active</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📈 Detailed Metrics by Round</h2>
+            <table class="metric-table">
+                <thead>
+                    <tr>
+                        <th>Round</th>
+                        <th>Loss</th>
+                        <th>Accuracy</th>
+                        <th>Precision</th>
+                        <th>Recall</th>
+                        <th>F1 Score</th>
+                        <th>Training Time (s)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                <tr>
+                    <td>1</td>
+                    <td>0.0000</td>
+                    <td>53.48%</td>
+                    <td>53.92%</td>
+                    <td>62.17%</td>
+                    <td>57.73%</td>
+                    <td>2.84</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>0.0000</td>
+                    <td>52.58%</td>
+                    <td>53.43%</td>
+                    <td>56.63%</td>
+                    <td>54.97%</td>
+                    <td>3.21</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>0.0000</td>
+                    <td>53.79%</td>
+                    <td>54.59%</td>
+                    <td>57.38%</td>
+                    <td>55.95%</td>
+                    <td>3.61</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>0.0000</td>
+                    <td>53.86%</td>
+                    <td>54.61%</td>
+                    <td>58.00%</td>
+                    <td>56.23%</td>
+                    <td>4.05</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>0.0000</td>
+                    <td>52.95%</td>
+                    <td>53.73%</td>
+                    <td>57.65%</td>
+                    <td>55.62%</td>
+                    <td>4.51</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>📋 Server Log Details (Sample)</h2>
+            <div class="log-section">
+                
+                <div class="log-entry log-debug">
+                    <span class="timestamp">2025-10-05 16:29:47,724</span> - root - DEBUG - This will be logged to both the console and the file.
+                </div>
+                <div class="log-entry log-debug">
+                    <span class="timestamp">2025-10-05 16:29:47,724</span> - root - DEBUG - Starting Flower server...
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:47,724</span> - STDOUT - INFO - TRUE
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:47,731</span> - flwr - INFO - Starting Flower server, config: ServerConfig(num_rounds=5, round_timeout=None)
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:47,741</span> - flwr - INFO - Flower ECE: gRPC server running (5 rounds), SSL is enabled
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:47,742</span> - flwr - INFO - Initializing global parameters
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:47,742</span> - flwr - INFO - Requesting initial parameters from one random client
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:48,488</span> - flwr - INFO - Received initial parameters from one random client
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:48,488</span> - flwr - INFO - Evaluating initial parameters
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:48,488</span> - flwr - INFO - FL starting
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:52,391</span> - STDOUT - INFO - 	round 4: 0.6896824240684509
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:52,392</span> - STDOUT - INFO - 	round 5: 0.6898843050003052
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:52,395</span> - STDOUT - INFO - History (metrics, distributed, fit):
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:52,395</span> - STDOUT - INFO - {'training_time [s]': [(1, 2.8448963165283203), (2, 3.2105321884155273), (3, 3.6076061725616455), (4, 4.0477776527404785), (5, 4.507206439971924)]}History (metrics, distributed, evaluate):
+                </div>
+                <div class="log-entry log-info">
+                    <span class="timestamp">2025-10-05 16:29:52,395</span> - STDOUT - INFO - {'recall': [(1, 0.6216650903224945), (2, 0.5662896633148193), (3, 0.5738426744937897), (4, 0.5799588859081268), (5, 0.5765316784381866)], 'per client recall': [(1, [0.5919540524482727, 0.6513761281967163]), (2, [0.5545976758003235, 0.5779816508293152]), (3, [0.5902140736579895, 0.5574712753295898]), (4, [0.5574712753295898, 0.6024464964866638]), (5, [0.568965494632721, 0.5840978622436523])], 'precision': [(1, 0.5392161309719086), (2, 0.5342527329921722), (3, 0.5459092557430267), (4, 0.5460819602012634), (5, 0.5372801721096039)], 'per client precision': [(1, [0.5350649356842041, 0.543367326259613]), (2, [0.5361111164093018, 0.5323943495750427]), (3, [0.5514285564422607, 0.5403899550437927]), (4, [0.5434173941612244, 0.5487465262413025]), (5, [0.5380434989929199, 0.5365168452262878])], 'accuracy': [(1, 0.5348484814167023), (2, 0.5257575809955597), (3, 0.5378787815570831), (4, 0.5386363565921783), (5, 0.5295454561710358)], 'per client accuracy': [(1, [0.5136363506317139, 0.5560606122016907]), (2, [0.5121212005615234, 0.539393961429596]), (3, [0.5590909123420715, 0.5166666507720947]), (4, [0.5196969509124756, 0.5575757622718811]), (5, [0.5151515007019043, 0.5439394116401672])], 'specificity': [(1, 0.4443722516298294), (2, 0.4831225425004959), (3, 0.49984118342399597), (4, 0.4955388009548187), (5, 0.47981634736061096)], 'per client specificity': [(1, [0.42628204822540283, 0.462462455034256]), (2, [0.46474358439445496, 0.5015015006065369]), (3, [0.5285285115242004, 0.4711538553237915]), (4, [0.47756409645080566, 0.5135135054588318]), (5, [0.45512819290161133, 0.5045045018196106])], 'balanced_accuracy': [(1, 0.5330186784267426), (2, 0.524706095457077), (3, 0.5368419289588928), (4, 0.5377488434314728), (5, 0.5281739830970764)], 'per client balanced_accuracy': [(1, [0.5091180801391602, 0.556919276714325]), (2, [0.509670615196228, 0.539741575717926]), (3, [0.559371292591095, 0.5143125653266907]), (4, [0.5175176858901978, 0.5579800009727478]), (5, [0.5120468139648438, 0.5443011522293091])], 'f1': [(1, 0.5772815942764282), (2, 0.5497249662876129), (3, 0.5594801008701324), (4, 0.5623493194580078), (5, 0.5561849176883698)], 'per client f1': [(1, [0.5620736479759216, 0.5924895405769348]), (2, [0.5451977252960205, 0.5542522072792053]), (3, [0.5701624751091003, 0.5487977266311646]), (4, [0.5503545999526978, 0.5743440389633179]), (5, [0.5530726313591003, 0.5592972040176392])], 'per client n samples': [(1, [660, 660]), (2, [660, 660]), (3, [660, 660]), (4, [660, 660]), (5, [660, 660])]}
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Key Insights</h2>
+            <ul style="font-size: 1.1em; line-height: 1.8;">
+                <li><strong>Training Stability:</strong> Training completed with 5 rounds</li>
+                <li><strong>Client Participation:</strong> 2 clients participated in the training</li>
+                <li><strong>Performance Metrics:</strong> Final accuracy reached 52.95%</li>
+                <li><strong>Training Efficiency:</strong> Total training completed in 3.88 seconds</li>
+                <li><strong>Final Loss:</strong> Training converged to loss value of 0.0000</li>
+            </ul>
+        </div>
+    </div>
+    
+    <footer class="bannerEU">
+        <div class="container">
+            <div style="text-align: center; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 15px;">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMzAiIHZpZXdCb3g9IjAgMCA0MCAzMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjMDAzMzk5Ii8+CjxjaXJjbGUgY3g9IjIwIiBjeT0iMTUiIHI9IjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIwLjUiLz4KPGNpcmNsZSBjeD0iMjAiIGN5PSI3IiByPSIxIiBmaWxsPSIjRkZGRkZGIi8+CjxjaXJjbGUgY3g9IjI0LjMzIiBjeT0iOC41IiByPSIxIiBmaWxsPSIjRkZGRkZGIi8+CjxjaXJjbGUgY3g9IjI3IiBjeT0iMTIiIHI9IjEiIGZpbGw9IiNGRkZGRkYiLz4KPGNpcmNsZSBjeD0iMjcuNSIgY3k9IjE2IiByPSIxIiBmaWxsPSIjRkZGRkZGIi8+CjxjaXJjbGUgY3g9IjI2IiBjeT0iMjAiIHI9IjEiIGZpbGw9IiNGRkZGRkYiLz4KPGNpcmNsZSBjeD0iMjMiIGN5PSIyMiIgcj0iMSIgZmlsbD0iI0ZGRkZGRiIvPgo8Y2lyY2xlIGN4PSIyMCIgY3k9IjIzIiByPSIxIiBmaWxsPSIjRkZGRkZGIi8+CjxjaXJjbGUgY3g9IjE3IiBjeT0iMjIiIHI9IjEiIGZpbGw9IiNGRkZGRkYiLz4KPGNpcmNsZSBjeD0iMTQiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI0ZGRkZGRiIvPgo8Y2lyY2xlIGN4PSIxMi41IiBjeT0iMTYiIHI9IjEiIGZpbGw9IiNGRkZGRkYiLz4KPGNpcmNsZSBjeD0iMTMiIGN5PSIxMiIgcj0iMSIgZmlsbD0iI0ZGRkZGRiIvPgo8Y2lyY2xlIGN4PSIxNS42NyIgY3k9IjguNSIgcj0iMSIgZmlsbD0iI0ZGRkZGRiIvPgo8L3N2Zz4K" alt="European Union Flag" style="height: 24px; width: auto;">
+                <div style="text-align: left;">
+                    <p style="margin: 5px 0 0 0; font-size: 12px; opacity: 0.8;">
+                        This project has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreement No 101016496.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    
+    <script>
+        // DataTools4Heart color palette
+        const dt4hColors = {
+            primary: '#ae0d1b',
+            secondary: '#8b0a15',
+            accent: '#d42434',
+            success: '#28a745',
+            warning: '#ffc107',
+            danger: '#dc3545'
+        };
+
+        // Chart.js default configuration
+        Chart.defaults.font.family = 'Inter, sans-serif';
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = '#495057';
+
+        // Loss Chart
+        const lossCtx = document.getElementById('lossChart').getContext('2d');
+        new Chart(lossCtx, {
+            type: 'line',
+            data: {
+                labels: ["Round 1", "Round 2", "Round 3", "Round 4", "Round 5", "Round 6", "Round 7", "Round 8", "Round 9", "Round 10"],
+                datasets: [{
+                    label: 'Training Loss',
+                    data: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    borderColor: dt4hColors.primary,
+                    backgroundColor: dt4hColors.primary + '20',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointBackgroundColor: dt4hColors.primary,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            font: {
+                                weight: 600
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: '#e9ecef'
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#e9ecef'
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Accuracy Chart
+        const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+        new Chart(accuracyCtx, {
+            type: 'line',
+            data: {
+                labels: ["Round 1", "Round 2", "Round 3", "Round 4", "Round 5", "Round 6", "Round 7", "Round 8", "Round 9", "Round 10"],
+                datasets: [{
+                    label: 'Accuracy (%)',
+                    data: [53.48484814167023, 52.57575809955597, 53.78787815570831, 53.863635659217834, 52.95454561710358, 53.48484814167023, 52.57575809955597, 53.78787815570831, 53.863635659217834, 52.95454561710358],
+                    borderColor: dt4hColors.success,
+                    backgroundColor: dt4hColors.success + '20',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointBackgroundColor: dt4hColors.success,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            font: {
+                                weight: 600
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: '#e9ecef'
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#e9ecef'
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Training Time Chart
+        const timeCtx = document.getElementById('timeChart').getContext('2d');
+        new Chart(timeCtx, {
+            type: 'bar',
+            data: {
+                labels: ["Round 1", "Round 2", "Round 3", "Round 4", "Round 5", "Round 6", "Round 7", "Round 8", "Round 9", "Round 10"],
+                datasets: [{
+                    label: 'Training Time (s)',
+                    data: [2.8448963165283203, 3.2105321884155273, 3.6076061725616455, 4.0477776527404785, 4.507206439971924, 2.8448963165283203, 3.2105321884155273, 3.6076061725616455, 4.0477776527404785, 4.507206439971924],
+                    backgroundColor: dt4hColors.accent + 'CC',
+                    borderColor: dt4hColors.accent,
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            font: {
+                                weight: 600
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e9ecef'
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6c757d'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Performance Metrics Chart (Final Round)
+        const metricsCtx = document.getElementById('metricsChart').getContext('2d');
+        new Chart(metricsCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'Specificity', 'Balanced Accuracy'],
+                datasets: [{
+                    label: 'Performance Metrics (%)',
+                    data: [52.95454561710358, 53.72801721096039, 57.653167843818665, 55.618491768836975, 47.981634736061096, 52.81739830970764],
+                    borderColor: dt4hColors.primary,
+                    backgroundColor: dt4hColors.primary + '30',
+                    pointBackgroundColor: dt4hColors.primary,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 3,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            font: {
+                                weight: 600
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: '#e9ecef'
+                        },
+                        angleLines: {
+                            color: '#e9ecef'
+                        },
+                        pointLabels: {
+                            color: '#6c757d',
+                            font: {
+                                size: 11,
+                                weight: 600
+                            }
+                        },
+                        ticks: {
+                            color: '#6c757d',
+                            backdropColor: 'transparent'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

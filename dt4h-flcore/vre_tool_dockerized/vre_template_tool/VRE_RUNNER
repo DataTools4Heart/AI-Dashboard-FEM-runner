@@ -1,0 +1,40 @@
+#!/bin/bash
+
+###
+### Main Executor
+###
+### Script that validates software dependencies and call VRE_RUNNER.py
+###
+
+
+DEPENDENCIES=("python3")  # TODO add your software dependencies (e.g. DEPENDENCIES=("Rscript","docker")
+PROGNAME="VRE_RUNNER.py"
+
+# Validate dependencies
+
+REALPATH="$(realpath "$0")"
+BASEDIR="$(dirname "$REALPATH")"
+
+case "$BASEDIR" in
+/*)
+  true
+  ;;
+*)
+  BASEDIR="${PWD}/$BASEDIR"
+  ;;
+esac
+
+for prog in $(echo $DEPENDENCIES | sed "s/,/ /g"); do
+  type -a "$prog" >/dev/null
+  if [ $? -ne 0 ]; then
+    echo "UNCONFIGURED: No $prog executable found" 1>&2
+    exit 1
+  fi
+done
+
+# Run VRE_RUNNER
+
+echo $BASEDIR
+source "$BASEDIR"/venv/bin/activate
+exec python3 -u "${BASEDIR}"/"${PROGNAME}" "$@"
+exit 1

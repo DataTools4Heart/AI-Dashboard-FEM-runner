@@ -1,0 +1,16 @@
+{
+    "BSC": {
+        "user": "BSCrmq",
+        "node": "BSC",
+        "host": "212.128.226.71",
+        "port": 51536,
+        "state": "running"
+    },
+    "VHIR": {
+        "user": "VHIRrmq",
+        "node": "VHIR",
+        "host": "84.88.74.9",
+        "port": 6098,
+        "state": "running"
+    }
+}
