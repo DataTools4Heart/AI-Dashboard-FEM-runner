@@ -6,6 +6,13 @@
         "port": 51536,
         "state": "running"
     },
+    "UCLH": {
+        "user": "UCLHrmq",
+        "node": "UCLH",
+        "host": "4.234.218.150",
+        "port": 38696,
+        "state": "running"
+    },
     "VHIR": {
         "user": "VHIRrmq",
         "node": "VHIR",

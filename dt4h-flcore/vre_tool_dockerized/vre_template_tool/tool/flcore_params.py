@@ -38,8 +38,8 @@ class FlcoreDataset:
             try:
                 self.dataset = json.load(dataset_file)
             except json.JSONDecodeError:
-                logging.error(f"Failed to load dataset from {input_dataset_path}: {e}")
-                raise ValueError(f"Failed to load dataset file: {e}")
+                logging.error(f"Failedddddd to load dataset from {input_dataset_path}: {e}")
+                raise ValueError(f"Failedddddd to load dataset {input_dataset_path} file: {e}")
         
     def get_dataset_id(self):
         if isinstance(self.dataset, list):

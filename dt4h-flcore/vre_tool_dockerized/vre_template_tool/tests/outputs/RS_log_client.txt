@@ -1,0 +1,18 @@
+2025-10-07 11:35:29,902 - root - DEBUG - This will be logged to both the console and the file.
+2025-10-07 11:35:29,902 - root - DEBUG - This will be logged to both the console and the file.
+2025-10-07 11:35:30,158 - flwr - INFO - Opened secure gRPC connection using certificates
+2025-10-07 11:35:30,160 - flwr - DEBUG - ChannelConnectivity.IDLE
+2025-10-07 11:35:30,160 - flwr - DEBUG - ChannelConnectivity.CONNECTING
+2025-10-07 11:35:33,367 - flwr - DEBUG - ChannelConnectivity.READY
+2025-10-07 11:35:33,763 - STDOUT - INFO - num_client 0 has an elapsed time 0.18196892738342285
+2025-10-07 11:35:33,763 - STDOUT - INFO - Training finished for round 1
+2025-10-07 11:35:34,641 - STDOUT - INFO - num_client 0 has an elapsed time 0.17927956581115723
+2025-10-07 11:35:34,641 - STDOUT - INFO - Training finished for round 2
+2025-10-07 11:35:35,477 - STDOUT - INFO - num_client 0 has an elapsed time 0.1760702133178711
+2025-10-07 11:35:35,477 - STDOUT - INFO - Training finished for round 3
+2025-10-07 11:35:36,444 - STDOUT - INFO - num_client 0 has an elapsed time 0.17693376541137695
+2025-10-07 11:35:36,444 - STDOUT - INFO - Training finished for round 4
+2025-10-07 11:35:37,497 - STDOUT - INFO - num_client 0 has an elapsed time 0.17232513427734375
+2025-10-07 11:35:37,497 - STDOUT - INFO - Training finished for round 5
+2025-10-07 11:35:38,494 - flwr - DEBUG - gRPC channel closed
+2025-10-07 11:35:38,494 - flwr - INFO - Disconnect and shut down

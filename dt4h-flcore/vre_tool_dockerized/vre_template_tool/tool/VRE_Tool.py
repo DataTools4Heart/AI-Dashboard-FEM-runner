@@ -277,7 +277,7 @@ class myTool( Tool ):
     
 
         if self.configuration['demo_mode']:
-            logger.info("Running in DEMO MODE — copying pre-generated outputs from tests/outputs/")
+            logger.info("Running in dmeo mode — copying pre-generated outputs from tests/outputs/")
             
             # Define source and destination directories
             tests_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tests", "outputs")
@@ -298,12 +298,9 @@ class myTool( Tool ):
             logger.info(f"-- Copied {src_server_log} → {dst_server_log}")
 
             # Copy client logs
-            clients = self.configuration['client_node_list']
-            if isinstance(clients, str):
-                clients = [c.strip() for c in clients.split(",") if c.strip()]
-            for client in clients:
-                src_client_log = os.path.join(tests_dir, "BSC_log_client.txt")
-                dst_client_log = os.path.join(dest_dir, f"{client}_log_client.txt")
+            for src_client_log in glob(os.path.join(tests_dir, "*_log_client.txt")):
+                logName = os.path.basename(src_client_log)
+                dst_client_log = os.path.join(dest_dir,logName)
                 shutil.copy2(src_client_log, dst_client_log)
                 logger.info(f"-- Copied {src_client_log} → {dst_client_log}")
 

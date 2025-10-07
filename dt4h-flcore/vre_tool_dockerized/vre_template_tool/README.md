@@ -30,8 +30,9 @@ Directly from GitHub:
 
 ```bash
 cd $HOME
-git clone https://github.com/inab/vre_template_tool.git
-cd vre_template_tool
+git clone <repo>
+git checkout <branch>
+cd AI-Dashboard-FEM-runner/dt4h-flcore/vre_tool_dockerized/vre_template_tool
 ```
 
 Create the Python environment:
@@ -41,10 +42,27 @@ python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip wheel
 pip install -r requirements.txt
+pip install -r requirements_app.txt
 ```
 
-## Run the Wrapper
+## Run a preconfigured (basic) test
 
+Double check run parameters at:
+- `tests/basic/config.json`
+- `tests/basic/.env`
+
+UPDATE the `file_path`s of the inputs to match your local absolute path at:
+- `tests/basic/in_metadata.json`
+
+Run the example like follows:
+
+```bash
+bash tests/basic/test_VRE_RUNNER.sh
+```
+
+The bash script will run the standard VRE command with the configuration files given in the test folder and will output the results in: `tests/basic/run000`
+
+### Example
 ```bash
 ./VRE_RUNNER --config tests/basic/config.json --in_metadata tests/basic/in_metadata.json --out_metadata out_metadata.json --log_file VRE_RUNNER.log
 ```

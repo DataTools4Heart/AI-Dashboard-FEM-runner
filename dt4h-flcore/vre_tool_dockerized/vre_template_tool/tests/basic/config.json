@@ -32,7 +32,7 @@
         },
         {
             "name": "client_node_list",
-            "value": "VHIR,BSC"
+            "value": "VHIR,UMCU,RS,ICRC,GEM,UCLH"
         },
         {
             "name": "tool_name",
@@ -52,7 +52,7 @@
         },
         {
             "name": "demo_mode",
-            "value": "False"
+            "value": "True"
         },
         {
             "name": "finish_wait",
@@ -91,16 +91,122 @@
             }
         },
         {
-            "name": "client_log",
-            "required": true,
-            "allow_multiple": true,
+            "name": "VHIR_client_log",
+            "required": false,
+            "allow_multiple": false,
             "file": {
                 "file_type": "TXT",
                 "data_type": "log",
 		"tool":"flcore",
+		"file_path": "VHIR_log_client.txt",
                 "meta_data": {
                     "visible": true,
-                    "description": "Result of tool application example"
+                    "description": "Result of client"
+                }
+            }
+        },
+        {
+            "name": "BSC_client_log",
+            "required": false,
+            "allow_multiple": false,
+            "file": {
+                "file_type": "TXT",
+                "data_type": "log",
+		"tool":"flcore",
+		"file_path": "BSC_log_client.txt",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of client"
+                }
+            }
+        },
+        {
+            "name": "UB_client_log",
+            "required": false,
+            "allow_multiple": false,
+            "file": {
+                "file_type": "TXT",
+                "data_type": "log",
+		"tool":"flcore",
+		"file_path": "UB_log_client.txt",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of client"
+                }
+            }
+        },
+        {
+            "name": "R2_client_log",
+            "required": false,
+            "allow_multiple": false,
+            "file": {
+                "file_type": "TXT",
+                "data_type": "log",
+		"tool":"flcore",
+		"file_path": "R2_log_client.txt",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of client"
+                }
+            }
+        },
+        {
+            "name": "UMCU_client_log",
+            "required": false,
+            "allow_multiple": false,
+            "file": {
+                "file_type": "TXT",
+                "data_type": "log",
+		"tool":"flcore",
+		"file_path": "UMCU_log_client.txt",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of client"
+                }
+            }
+        },
+        {
+            "name": "ICRC_client_log",
+            "required": false,
+            "allow_multiple": false,
+            "file": {
+                "file_type": "TXT",
+                "data_type": "log",
+		"tool":"flcore",
+		"file_path": "ICRC_log_client.txt",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of client"
+                }
+            }
+        },
+        {
+            "name": "GEM_client_log",
+            "required": false,
+            "allow_multiple": false,
+            "file": {
+                "file_type": "TXT",
+                "data_type": "log",
+		"tool":"flcore",
+		"file_path": "GEM_log_client.txt",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of client"
+                }
+            }
+        },
+        {
+            "name": "UCLH_client_log",
+            "required": false,
+            "allow_multiple": false,
+            "file": {
+                "file_type": "TXT",
+                "data_type": "log",
+		"tool":"flcore",
+		"file_path": "UCLH_log_client.txt",
+                "meta_data": {
+                    "visible": true,
+                    "description": "Result of client"
                 }
             }
         },
