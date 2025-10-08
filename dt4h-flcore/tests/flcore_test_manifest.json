@@ -1,5 +1,8 @@
 [
-  {"dataset_id": "BSC:/data/test_study/3362-2045-1944"},
+  {"dataset_id": "UMCU:/data/test_study/3362-2045-1944"},
   {"dataset_id": "VHIR:/data/test_study/3362-2045-1944"},
+  {"dataset_id": "RS:/data/test_study/3362-2045-1944"},
+  {"dataset_id": "GEM:/data/test_study/3362-2045-1944"},
+  {"dataset_id": "ICRC:/data/test_study/3362-2045-1944"},
   {"dataset_id": "UCLH:/data/test_study/3362-2045-1944"}
 ]
