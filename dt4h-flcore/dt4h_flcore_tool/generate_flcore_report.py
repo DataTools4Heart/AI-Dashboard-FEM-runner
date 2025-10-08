@@ -89,11 +89,10 @@ class FLCoreLogParser:
             
             # Extract losses
             if 'losses_distributed' in msg:
-                pattern = r'\[(\d+), ([\d.]+)\]'
+                pattern = r'\((\d+), ([\d.]+)\)'
                 for match in re.finditer(pattern, msg):
                     round_num, loss = match.groups()
                     losses.append((int(round_num), float(loss)))
-            
             # Extract training times
             if 'training_time [s]' in msg:
                 pattern = r'\((\d+), ([\d.]+)\)'
