@@ -100,7 +100,7 @@ def dt4h_flcore(
 
         logging.info(f"Saving heartbeat data on file {health_check_path}")
         try:
-            with open(health_check_path, "w", encoding='utf-8') as f:
+            with open(f"{output_path}/{health_check_path}", "w", encoding='utf-8') as f:
                 json.dump(api_client.health_sites_data, f, indent=4)
         except Exception as e:
             logging.error(f"Failed to save health check data: {e}")
