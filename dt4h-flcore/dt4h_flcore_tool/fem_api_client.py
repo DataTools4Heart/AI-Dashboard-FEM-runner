@@ -111,22 +111,22 @@ class FEMAPIClient:
             headers=self._create_auth_header()
         )
 
-    def run_health_check(self) -> dict:
+    def run_health_check(self, server_node=None, client_node_list=None) -> dict:
         '''Run health check on server and client nodes.'''
         self.server_node = None
         self.client_nodes = []
 
         logging.info("Checking server health")
-        self.node_heartbeat(self.server_node)
-        if 'state' in self.health_sites_data[self.server_node] and \
-                self.health_sites_data[self.server_node]['state'] == 'running':
-            self.server_node = self.server_node
-        logging.info(f"server: {self.health_sites_data[self.server_node]}")
-        if isinstance(self.client_node_list, str):
-            client_node_list = self.client_node_list.split(',')
+        self.node_heartbeat(server_node)
+        if 'state' in self.health_sites_data[server_node] and \
+                self.health_sites_data[server_node]['state'] == 'running':
+            self.server_node = server_node
+        logging.info(f"server: {self.health_sites_data[server_node]}")
+        if isinstance(client_node_list, str):
+            client_node_list = client_node_list.split(',')
 
         logging.info("Checking client nodes health")
-        self.node_heartbeat(self.client_node_list)
+        self.node_heartbeat(client_node_list)
         for node in client_node_list:
             if not self.health_sites_data.get(node):
                 logging.error(f"No client heartbeat data found for node {node}")
