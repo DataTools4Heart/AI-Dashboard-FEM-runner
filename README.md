@@ -38,6 +38,6 @@ This repository contains the code of a dockerized openVRE analysis tool. It impl
 
 ## Current status
 
-**Not functional**: Code under developement
+**Functional**: Code under developement. Demostrated at DT4H consortium meeting (Sept 2025)
 
 
