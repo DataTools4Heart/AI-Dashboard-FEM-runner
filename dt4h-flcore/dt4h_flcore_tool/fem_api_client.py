@@ -72,7 +72,7 @@ class FEMAPIClient:
         '''Get the list of available hosts.'''
         return self._do_get_request(URL_HOSTS, headers=self._create_auth_header())
 
-    def node_resources(self, node_list: str|list[str]) -> dict:
+    def node_resources(self, node_list) -> dict:
         '''Get the list of available resources.'''
         if isinstance(node_list, str):
             node_list = [node_list]
@@ -83,7 +83,7 @@ class FEMAPIClient:
             headers=self._create_auth_header()
         )
 
-    def node_heartbeat(self, node: str|list[str]) -> dict:
+    def node_heartbeat(self, node) -> dict:
         '''Check the heartbeat of a node.'''
         if isinstance(node, str):
             node = [node]
