@@ -31,31 +31,35 @@ DEFAULT_SERVER_PARAMS = {
 class FlcoreDataset:
     ''' Class to represent the FLCore dataset as stored in VRE user space'''
     def __init__(self, input_dataset_path: str = None):
+        self.datasets = []
         if input_dataset_path is None:
-            self.dataset = {}
             return
-        with open(input_dataset_path, 'r', encoding='utf-8') as dataset_file:
-            try:
-                self.dataset = json.load(dataset_file)
-            except json.JSONDecodeError:
-                logging.error(f"Failedddddd to load dataset from {input_dataset_path}: {e}")
-                raise ValueError(f"Failedddddd to load dataset {input_dataset_path} file: {e}")
+        if not isinstance(input_dataset_path, list):
+            input_dataset_path = [input_dataset_path]
+
+        for path in input_dataset_path:
+            with open(path, 'r', encoding='utf-8') as dataset_file:
+                try:
+                    self.datasets.append(json.load(dataset_file))
+                except json.JSONDecodeError:
+                    logging.error(f"Failed to load dataset from {path}: {e}")
+                    raise ValueError(f"Failed to load dataset file: {e}")
         
     def get_dataset_id(self):
-        if isinstance(self.dataset, list):
-            return [dts.get('dataset_id', None) for dts in self.dataset if 'dataset_id' in dts]
-        return self.dataset.get('dataset_id', None)
+        if isinstance(self.datasets, list):
+            return [dts.get('dataset_id', None) for dts in self.datasets if 'dataset_id' in dts]
+        return self.datasets.get('dataset_id', None)
 
     def get_clients(self):
-        if isinstance(self.dataset, list):
+        if isinstance(self.datasets, list):
             nodes = set()
-            for dts in self.dataset:
+            for dts in self.datasets:
                 if 'dataset_id' in dts and ':' in dts['dataset_id']:
                     node, _ = dts['dataset_id'].split(':', 1)
                     nodes.add(node)
             return list(nodes)
-        if 'dataset_id' in self.dataset and ':' in self.dataset['dataset_id']:
-            node, _ = self.dataset['dataset_id'].split(':', 1)
+        if 'dataset_id' in self.datasets and ':' in self.datasets['dataset_id']:
+            node, _ = self.datasets['dataset_id'].split(':', 1)
             return [node]
         return []
 
@@ -96,7 +100,7 @@ class FlcoreParams:
             self, 
             input_params_path: str = None,
             num_clients:int = 1,
-            dataset_id: str = None,
+            dataset_id: list[str] = None,
             opal_vars=None,
             target_label: str = None 
         ):
