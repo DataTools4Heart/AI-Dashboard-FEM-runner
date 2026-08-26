@@ -209,7 +209,6 @@ class myTool( Tool ):
             - client_node_list
             - tool_name
         Required input_metadata keys:
-            - flcore_config
             - datasets
         Optional:
             - variables (if present, requires target_label in configuration)
@@ -235,7 +234,7 @@ class myTool( Tool ):
         # -- validate input files and run parameters ---
 
         required_config_keys = ['server_node', 'client_node_list', 'tool_name']
-        required_input_keys = ['flcore_config', 'datasets']
+        required_input_keys =  ['datasets']
 
         # Validating required parameters (from config.json)
         missing_config = [k for k in required_config_keys if k not in self.configuration]
@@ -246,6 +245,17 @@ class myTool( Tool ):
         missing_inputs = [k for k in required_input_keys if k not in input_metadata]
         if missing_inputs:
            raise ValueError(f"Missing required input metadata keys: {missing_inputs}")
+
+        # Fetching compulsory input flcore_config
+
+        flcore_config_filename = self.configuration.get('flcore_config:builder:config_filename', None)
+        if not flcore_config_filename:
+           raise ValueError(f"Cannot find required input. FLCore config filename (flcore_config:builder:config_filename) not defined.")
+                    
+        flcore_config_path = os.path.join(self.execution_path, flcore_config_filename)
+        if not os.path.isfile(flcore_config_path):
+            raise ValueError(f"Cannot find required input. Expected FLCore config not found at path: {flcore_config_filename}")
+
 
         # Validating conditional parameters and inputs - variables and target_label
         has_variables = 'variables' in input_metadata and input_metadata['variables'] is not None
@@ -263,7 +273,7 @@ class myTool( Tool ):
             'server_node': self.configuration['server_node'],
             'client_node_list': self.configuration['client_node_list'],
             'tool_name': self.configuration['tool_name'],
-            'input_params_path': input_metadata['flcore_config'],
+            'input_params_path': flcore_config_filename,
             'input_dataset_path': input_metadata['datasets'],
             'input_variables_path': input_metadata.get('variables'),  # may be None
             'health_check_path': health_check_path,
