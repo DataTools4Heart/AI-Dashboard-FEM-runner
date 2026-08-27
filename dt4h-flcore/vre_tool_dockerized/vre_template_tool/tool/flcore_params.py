@@ -38,9 +38,14 @@ class FlcoreDataset:
             input_dataset_path = [input_dataset_path]
 
         for path in input_dataset_path:
+            print(f"Loading dataset from {path}")
             with open(path, 'r', encoding='utf-8') as dataset_file:
                 try:
-                    self.datasets.append(json.load(dataset_file))
+                    datasets = json.load(dataset_file)
+                    if isinstance(datasets, list):     
+                        self.datasets.extend(datasets)
+                    else:  
+                        self.datasets.append(datasets)
                 except json.JSONDecodeError:
                     logging.error(f"Failed to load dataset from {path}: {e}")
                     raise ValueError(f"Failed to load dataset file: {e}")
