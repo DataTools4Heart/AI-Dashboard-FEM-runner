@@ -232,14 +232,18 @@ if __name__ == '__main__':
 
     args = argparser.parse_args()
 
-
+    # recognize if the input dataset path is a JSON array and convert it to a list
+    if '[' in str(args.input_dataset_path) and ']' in str(args.input_dataset_path):
+        input_dataset_path = json.loads(args.input_dataset_path)
+    else: 
+        input_dataset_path = args.input_dataset_path
     execution_results = dt4h_flcore(
         server_node=args.server_node,
         client_node_list=args.client_node_list,
         tool_name=args.tool_name,
         input_params_path=args.input_params_path,
         health_check_path=args.health_check,
-        input_dataset_path=args.input_dataset_path,
+        input_dataset_path=input_dataset_path,
         input_variables_path=args.input_variables_path,
         target_label=args.target_label,
         job_timeout=args.job_timeout,
