@@ -89,18 +89,16 @@ class FLCoreLogParser:
             
             # Extract losses
             if 'losses_distributed' in msg:
-                pattern = r'\[(\d+), ([\d.]+)\]'
+                pattern = r'\((\d+), ([\d.]+)\)'
                 for match in re.finditer(pattern, msg):
                     round_num, loss = match.groups()
                     losses.append((int(round_num), float(loss)))
-            
             # Extract training times
             if 'training_time [s]' in msg:
                 pattern = r'\((\d+), ([\d.]+)\)'
                 for match in re.finditer(pattern, msg):
                     round_num, time_val = match.groups()
                     training_times.append((int(round_num), float(time_val)))
-            
             # Extract evaluation metrics
             for metric in eval_metrics.keys():
                 if f"'{metric}':" in msg:
@@ -115,10 +113,12 @@ class FLCoreLogParser:
                             eval_metrics[metric].append((int(round_num), float(value)))
         
         self.metrics = {
-            'losses': losses,
-            'training_times': training_times,
+            'losses': losses[:self.rounds],
+            'training_times': training_times[:self.rounds],
             'eval_metrics': eval_metrics
         }
+        for metric, values in self.metrics['eval_metrics'].items():
+            self.metrics['eval_metrics'][metric] = values[:self.rounds]
     
     def _extract_clients(self):
         """Extract client information"""
