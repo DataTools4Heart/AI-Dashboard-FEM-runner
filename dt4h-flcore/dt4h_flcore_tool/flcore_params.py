@@ -19,7 +19,7 @@ DEFAULT_TRAIN_LABELS =  [
     'lab_results_tropIHs_value_min'
 ]
 
-DEFAULT_TARGET_LABEL = 'conditions_stroke_any'
+DEFAULT_TARGET_LABEL = ''
 
 DEFAULT_SERVER_PARAMS = {
     'n_features': len(DEFAULT_TRAIN_LABELS),
@@ -158,7 +158,8 @@ class FlcoreParams:
                     self.input_params[node]['data_id'] = dts_id
             if opal_vars is not None and len(opal_vars.variables) > 0:
                 self.input_params['train_labels'] = ' '.join(opal_vars.variables)
-            self.input_params['target_label'] = target_label if target_label else DEFAULT_TARGET_LABEL
+            if self.input_params['target_label'] == '':
+                self.input_params['target_label'] = target_label if target_label else DEFAULT_TARGET_LABEL
 
     def get_params_json(self):
         '''Get the FLCore parameters as a JSON string.'''
