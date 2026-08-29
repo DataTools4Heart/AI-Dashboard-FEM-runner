@@ -162,7 +162,8 @@ def dt4h_flcore(
         # Get files at sites
         try:
             files = api_client.get_execution_file_list()
-            logger.info(f"Files at sites: {files}")
+            print(f"Files at sites: {json.dumps(files, indent=4)}")
+            #logger.info(f"Files at sites: {json.dumps(files, indent=4)}")
         except Exception as e:
             logger.error(f"Failed to get execution files: {e}")
             return {'status': 'failure', 'message': f"Failed to get execution files: {e}"}
